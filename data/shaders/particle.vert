@@ -22,14 +22,14 @@ layout (location = 1) out vec2 Uv;
 
 void main() {
     vec2 TextureOffset = vec2(0.0f, 0.0f);
-    float x = float(pos.x&65535);
-    float y = float((pos.x>>16)&65535);
-    float z = float(pos.y) / 32.0;
+    float x = float(pos.x);
+    float y = float(pos.y);
+    float z = float((uv >> 2)) / 1000.0f;
     color = mix(inData.startColor, inData.endColor, z);
     gl_Position = sceneData.projectionMatrix * inData.matrix * vec4(x, y, 1.0 - z, 1.0);
 
-    float u = float(uv.x&65535);
-    float v = float((uv.x>>16)&65535);
-    Uv = vec2(u * textureData.uvScale.x + textureData.uvScale.x * TextureOffset.x,
-                  v * textureData.uvScale.y + textureData.uvScale.y * TextureOffset.y);
+    float u = float(uv&1);
+    float v = float((uv>>1)&1);
+    Uv = vec2(u,
+                  v);
 }
