@@ -5,6 +5,7 @@ import roguelike.Entity.*
 import org.joml.*
 import org.lwjgl.BufferUtils
 import org.lwjgl.stb.STBImageWrite
+import org.lwjgl.system.MemoryUtil.memAlloc
 import rain.api.Input
 import rain.api.entity.DirectionType
 import rain.api.entity.Entity
@@ -14,6 +15,7 @@ import rain.api.gfx.*
 import rain.api.scene.*
 import rain.vulkan.VertexAttribute
 import java.lang.Math
+import java.nio.ByteBuffer
 import kotlin.math.sign
 
 class Level(private val player: Player, val resourceFactory: ResourceFactory) {
@@ -37,6 +39,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         private set
     private lateinit var lightMap: VertexBuffer
     private lateinit var lightVertices: FloatArray
+    private lateinit var lightVerticesBuffer: ByteBuffer
     private lateinit var lightValues: Array<Vector4f>
     private lateinit var lightMapMaterial: Material
 
@@ -468,9 +471,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         torchSystem = scene.newSystem(torchMaterial)
 
         lightVertices = FloatArray(width*height*6*6){0.0f}
+        lightVerticesBuffer = memAlloc(lightVertices.size*4)
         lightValues = Array(width*height){Vector4f()}
         lightMap = resourceFactory.buildVertexBuffer()
-                .withVertices(lightVertices)
+                .withVertices(lightVerticesBuffer)
                 .withState(VertexBufferState.DYNAMIC)
                 .withAttribute(VertexAttribute(0, 2))
                 .withAttribute(VertexAttribute(1, 4))
@@ -760,7 +764,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
 
-        lightMap.update(lightVertices)
+        lightVerticesBuffer.asFloatBuffer().put(lightVertices).flip()
+        lightMap.update(lightVerticesBuffer)
     }
 
     private fun spreadLight(x: Int, y: Int, value: Vector4f) {

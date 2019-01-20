@@ -1,7 +1,7 @@
 #version 420 core
 
-layout(location = 0) in vec3 pos;
-layout(location = 1) in vec2 uv;
+layout(location = 0) in ivec2 pos;
+layout(location = 1) in int uv;
 
 layout(push_constant) uniform ModelMatrix {
     mat4 matrix;
@@ -21,7 +21,15 @@ layout (location = 0) out vec4 color;
 layout (location = 1) out vec2 Uv;
 
 void main() {
-    color = mix(inData.startColor, inData.endColor, pos.z);
-    gl_Position = sceneData.projectionMatrix * inData.matrix * vec4(pos.x, pos.y, 1.0 - pos.z, 1.0);
-    Uv = uv;
+    vec2 TextureOffset = vec2(0.0f, 0.0f);
+    float x = float(pos.x&65535);
+    float y = float((pos.x>>16)&65535);
+    float z = float(pos.y) / 32.0;
+    color = mix(inData.startColor, inData.endColor, z);
+    gl_Position = sceneData.projectionMatrix * inData.matrix * vec4(x, y, 1.0 - z, 1.0);
+
+    float u = float(uv.x&65535);
+    float v = float((uv.x>>16)&65535);
+    Uv = vec2(u * textureData.uvScale.x + textureData.uvScale.x * TextureOffset.x,
+                  v * textureData.uvScale.y + textureData.uvScale.y * TextureOffset.y);
 }

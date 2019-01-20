@@ -59,6 +59,7 @@ class Player : Entity() {
     private var damageShake = 0.0f
     private var damagePushVelX = 0.0f
     private var damagePushVelY = 0.0f
+    private var isStill = true
 
     var targetedEnemy: Enemy? = null
         private set
@@ -141,6 +142,7 @@ class Player : Entity() {
         cellY = pos.y / 768
         transform.x = pos.x.toFloat()%1280
         transform.y = pos.y.toFloat()%768
+        changeMoveComponent(transform, 0.0f, 0.0f)
         playerMovedCell = true
     }
 
@@ -172,13 +174,15 @@ class Player : Entity() {
 
         if (damageShake > 0.0f) {
             val shake = Math.sin(damageShake.toDouble() * Math.PI * 32).toFloat() * 3
-
+            
             if (!level.collides(transform.x + damagePushVelX, transform.y, 64.0f, 64.0f)) {
-                transform.x += damagePushVelX
+                changeMoveComponent(transform, damagePushVelX, 0.0f)
+                isStill = false
             }
 
             if (!level.collides(transform.x, transform.y + damagePushVelY, 64.0f, 64.0f)) {
-                transform.y += damagePushVelY
+                changeMoveComponent(transform, 0.0f, damagePushVelY)
+                isStill = false
             }
 
             scene.activeCamera.view.translate(0.0f, shake * 2, 0.0f)
@@ -245,6 +249,12 @@ class Player : Entity() {
         val speed = 100.0f * (1.0f / 60.0f)
         if (!dodgeMovement) {
             if (inputTimestamps.size <= 0) {
+                if (damageShake <= 0.0f) {
+                    if (!isStill) {
+                        changeMoveComponent(transform, 0.0f, 0.0f)
+                        isStill = true
+                    }
+                }
                 return
             }
 
@@ -279,8 +289,8 @@ class Player : Entity() {
                 velY = 0.0f
             }
 
-            transform.x += velX
-            transform.y += velY
+            changeMoveComponent(transform, velX, velY)
+            isStill = false
             keepPlayerWithinBorder(velX, velY)
         }
         else {
@@ -303,8 +313,8 @@ class Player : Entity() {
                     velY = 0.0f
                 }
 
-                transform.x += velX
-                transform.y += velY
+                changeMoveComponent(transform, velX, velY)
+                isStill = false
                 keepPlayerWithinBorder(velX, velY)
             }
 

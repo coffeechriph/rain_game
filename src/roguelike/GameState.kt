@@ -10,6 +10,8 @@ import rain.State
 import rain.StateManager
 import rain.api.Input
 import rain.api.entity.EntitySystem
+import rain.api.entity.addMoveComponent
+import rain.api.entity.changeMoveComponent
 import rain.api.gfx.Material
 import rain.api.gfx.ResourceFactory
 import rain.api.gfx.Texture2d
@@ -61,6 +63,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .attachSpriteComponent()
                 .attachAnimatorComponent()
                 .build()
+        addMoveComponent(player.transform, 0.0f, 0.0f)
 
         level = Level(player, resourceFactory)
 
@@ -111,6 +114,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         scene.activeCamera = camera
 
         player.setPosition(level.getFirstTilePos())
+        changeMoveComponent(player.transform, 0.0f, 0.0f)
         level.switchCell(resourceFactory, player.cellX, player.cellY)
 
         inventory = Inventory(gui, player)

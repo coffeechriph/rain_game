@@ -8,7 +8,7 @@ import rain.api.scene.Scene
 
 class MiniKrac(random: Random, player: Player): Enemy(random, player) {
     init {
-        strengthFactor = 0.65f
+        strengthFactor = 0.70f
         healthFactor = 0.65f
         agilityFactor = 2.0f
         walkingSpeedFactor = 1.0f

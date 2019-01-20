@@ -8,7 +8,7 @@ apply plugin: 'kotlin'
 apply plugin: 'application'
 group '1'
 version '1.0'
-mainClassName = "example.roguelike.MainKt"
+mainClassName = "roguelike.MainKt"
 
 sourceCompatibility = '11'
 targetCompatibility= '11'
@@ -37,7 +37,7 @@ repositories {
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     flatDir {
-        dirs 'libs'
+        dirs '../rain/build/libs'
     }
 }
 
