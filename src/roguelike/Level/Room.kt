@@ -6,6 +6,7 @@ import rain.api.entity.DirectionType
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.ResourceFactory
+import rain.log
 
 enum class RoomType {
     DIRT_CAVE,
@@ -89,12 +90,12 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                     .attachTransformComponent()
                     .attachSpriteComponent()
 
-            val attackSprite = enemyAttackSystem.findSpriteComponent(kracGuy.getId())!!
+            val attackSprite = enemyAttackSystem.findSpriteComponent(kracGuy.attackAreaVisual.getId())!!
             attackSprite.visible = false
             attackSprite.textureTileOffset.set(5,7)
 
             kracGuy.attackAreaVisualSprite = attackSprite
-            kracGuy.attackAreaVisualTransform = enemyAttackSystem.findTransformComponent(kracGuy.getId())!!
+            kracGuy.attackAreaVisualTransform = enemyAttackSystem.findTransformComponent(kracGuy.attackAreaVisual.getId())!!
 
             val levelFactor = (player.currentLevel*1.5f).toInt()
             kracGuy.strength = (random.nextInt(levelFactor) + levelFactor*10 * kracGuy.strengthFactor).toInt()
@@ -133,7 +134,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                     .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                     .build()
 
-            val emitter = containerSystem.findBurstEmitterComponent (container.getId())!!
+            val emitter = container.getBurstParticleEmitters()!![0]
             emitter.burstFinished = true
             emitter.singleBurst = true
             emitter.particlesPerBurst = 5
@@ -170,7 +171,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 val sprite = torchSystem.findSpriteComponent(et.getId())!!
                 sprite.visible = false
 
-                val emitter = torchSystem.findEmitterComponent(et.getId())!!
+                val emitter = et.getParticleEmitters()!![0]
                 emitter.startSize = 5.0f
                 emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
                 emitter.endColor.set(1.0f, 0.3f, 0.0f, 0.5f)
@@ -199,7 +200,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 etTransform.sx = 64.0f
                 etTransform.sy = 64.0f
 
-                val emitter = torchSystem.findEmitterComponent(et.getId())!!
+                val emitter = et.getParticleEmitters()!![0]
                 emitter.startSize = 20.0f
                 emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
                 emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.0f)

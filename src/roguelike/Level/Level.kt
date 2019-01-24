@@ -329,7 +329,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             if (container.open && !container.looted) {
                 container.looted = true
-                val emitter = containerSystem.findBurstEmitterComponent(container.getId())!!
+                val emitter = container.getBurstParticleEmitters()!![0]
                 emitter.fireSingleBurst()
 
                 for (i in 0 until container.numItems) {
@@ -521,7 +521,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 sprite.visible = false
             }
 
-            val emitter = torchSystem.findEmitterComponent(lights.getId())!!
+            val emitter = lights.getParticleEmitters()!![0]
             emitter.enabled = false
         }
 
@@ -553,7 +553,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             for (container in room.containers) {
                 if (container.cellX == cellX && container.cellY == cellY) {
                     container.sprite.visible = container.cellX == cellX && container.cellY == cellY
-                    val emitter = containerSystem.findBurstEmitterComponent(container.getId())!!
+                    val emitter = container.getBurstParticleEmitters()!![0]
                     emitter.enabled = container.sprite.visible
                     activeContainers.add(container)
                 }
@@ -564,7 +564,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     val sprite = torchSystem.findSpriteComponent(light.getId())!!
                     sprite.visible = true
 
-                    val emitter = torchSystem.findEmitterComponent(light.getId())!!
+                    val emitter = light.getParticleEmitters()!![0]
                     emitter.enabled = true
                     activeLightSources.add(light)
                 }
@@ -572,7 +572,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (light in room.campfire) {
                 if (light.cellX == cellX && light.cellY == cellY) {
-                    val emitter = torchSystem.findEmitterComponent(light.getId())!!
+                    val emitter = light.getParticleEmitters()!![0]
                     emitter.enabled = true
                     activeLightSources.add(light)
                 }
@@ -900,7 +900,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         etTransform.sx = 64.0f
         etTransform.sy = 64.0f
 
-        val emitter = torchSystem.findEmitterComponent(et.getId())!!
+        val emitter = et.getParticleEmitters()!![0]
         emitter.startSize = 20.0f
         emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
         emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.0f)
@@ -915,7 +915,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                 .build()
 
-        val emitter2 = containerSystem.findBurstEmitterComponent (container.getId())!!
+        val emitter2 = container.getBurstParticleEmitters()!![0]
         emitter2.burstFinished = true
         emitter2.singleBurst = true
         emitter2.particlesPerBurst = 5

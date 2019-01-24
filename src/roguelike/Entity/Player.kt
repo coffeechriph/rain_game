@@ -148,7 +148,7 @@ class Player : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        renderComponent = system.getRenderComponent(getId())!!
+        renderComponent = getRenderComponents()!![0]
         transform = system.findTransformComponent(getId())!!
         animator = system.findAnimatorComponent(getId())!!
         transform.setScale(64.0f,64.0f)
