@@ -2,6 +2,7 @@ package roguelike.Entity
 
 import org.joml.Vector3f
 import rain.api.Input
+import rain.api.entity.*
 import rain.api.gui.*
 import rain.api.gui.Container
 

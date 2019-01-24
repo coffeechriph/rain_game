@@ -7,6 +7,7 @@ import rain.api.entity.*
 import rain.api.scene.Scene
 import java.util.*
 
+val GLOBAL_ANIMATION_SPEED = 1.0f
 class Player : Entity() {
     class InputTimestamp(var direction: Direction, var time: Long)
     var playerMovedCell = false
@@ -17,7 +18,7 @@ class Player : Entity() {
     lateinit var inventory: Inventory
     lateinit var attack: Attack
     lateinit var transform: Transform
-    lateinit var sprite: Sprite
+    lateinit var renderComponent: RenderComponent
     lateinit var animator: Animator
 
     var health = 107
@@ -147,22 +148,22 @@ class Player : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        sprite = system.findSpriteComponent(getId())!!
+        renderComponent = system.getRenderComponent(getId())!!
         transform = system.findTransformComponent(getId())!!
         animator = system.findAnimatorComponent(getId())!!
         transform.setScale(64.0f,64.0f)
 
         animator.addAnimation("idle_down", 0, 0, 0, 0.0f)
-        animator.addAnimation("walk_down", 0, 4, 0, 4.0f)
+        animator.addAnimation("walk_down", 0, 4, 0, GLOBAL_ANIMATION_SPEED)
 
         animator.addAnimation("idle_right", 0, 0, 1, 0.0f)
-        animator.addAnimation("walk_right", 0, 4, 1, 4.0f)
+        animator.addAnimation("walk_right", 0, 4, 1, GLOBAL_ANIMATION_SPEED)
 
         animator.addAnimation("idle_left", 0, 0, 2, 0.0f)
-        animator.addAnimation("walk_left", 0, 4, 2, 4.0f)
+        animator.addAnimation("walk_left", 0, 4, 2, GLOBAL_ANIMATION_SPEED)
 
         animator.addAnimation("idle_up", 0, 0, 3, 0.0f)
-        animator.addAnimation("walk_up", 0, 4, 3, 4.0f)
+        animator.addAnimation("walk_up", 0, 4, 3, GLOBAL_ANIMATION_SPEED)
         animator.setAnimation("idle_down")
 
         attack = Attack(transform)
@@ -188,7 +189,7 @@ class Player : Entity() {
             scene.activeCamera.view.translate(0.0f, shake * 2, 0.0f)
 
             val cl = Math.max(Math.min(1.0f,shake),0.0f)
-            sprite.color.set(cl,cl,cl,cl)
+            renderComponent.color.set(cl,cl,cl,cl)
             damageShake -= 0.05f
 
             if (damageShake <= 0.0f) {
@@ -196,7 +197,7 @@ class Player : Entity() {
             }
         }
         else {
-            sprite.color.set(0.0f, 0.0f, 0.0f, 0.0f)
+            renderComponent.color.set(0.0f, 0.0f, 0.0f, 0.0f)
             scene.activeCamera.view.identity()
         }
 
@@ -401,7 +402,8 @@ class Player : Entity() {
     private fun keepPlayerWithinBorder(velX: Float, velY: Float) {
         if (transform.x < 0 && velX < 0.0f) {
             if (cellX > 0) {
-                transform.x = 1280.0f
+                transform.x = 1270.0f
+                changeMoveComponent(transform, velX, velY)
 
                 playerMovedCell = true
                 cellX -= 1
@@ -409,7 +411,8 @@ class Player : Entity() {
         }
         else if (transform.x > 1280 && velX > 0.0f) {
             if (cellX < level.maxCellX) {
-                transform.x = 0.0f
+                transform.x = 10.0f
+                changeMoveComponent(transform, velX, velY)
 
                 playerMovedCell = true
                 cellX += 1
@@ -418,7 +421,8 @@ class Player : Entity() {
 
         if (transform.y < 0 && velY < 0.0f) {
             if (cellY > 0) {
-                transform.y = 768.0f
+                transform.y = 758.0f
+                changeMoveComponent(transform, velX, velY)
 
                 playerMovedCell = true
                 cellY -= 1
@@ -426,7 +430,8 @@ class Player : Entity() {
         }
         else if (transform.y > 768 && velY > 0.0f) {
             if (cellY < level.maxCellY) {
-                transform.y = 0.0f
+                transform.y = 10.0f
+                changeMoveComponent(transform, velX, velY)
 
                 playerMovedCell = true
                 cellY += 1

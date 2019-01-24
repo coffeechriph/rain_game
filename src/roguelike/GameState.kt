@@ -9,13 +9,11 @@ import org.joml.Vector2f
 import rain.State
 import rain.StateManager
 import rain.api.Input
+import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.entity.addMoveComponent
 import rain.api.entity.changeMoveComponent
-import rain.api.gfx.Material
-import rain.api.gfx.ResourceFactory
-import rain.api.gfx.Texture2d
-import rain.api.gfx.TextureFilter
+import rain.api.gfx.*
 import rain.api.gui.Container
 import rain.api.gui.Gui
 import rain.api.gui.Text
@@ -23,6 +21,7 @@ import rain.api.scene.Camera
 import rain.api.scene.Scene
 
 class GameState(stateManager: StateManager): State(stateManager) {
+    lateinit var quadMesh: Mesh
     private lateinit var attackMaterial: Material
     private lateinit var mobMaterial: Material
     private lateinit var mobTexture: Texture2d
@@ -41,6 +40,9 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private lateinit var level: Level
 
     override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
+        val quadVertexBuffer = resourceFactory.buildVertexBuffer().as2dQuad()
+        quadMesh = Mesh(quadVertexBuffer, null)
+
         mobTexture = resourceFactory.buildTexture2d()
                 .withName("mobTexture")
                 .fromImageFile("./data/textures/dwarf.png")
@@ -60,10 +62,11 @@ class GameState(stateManager: StateManager): State(stateManager) {
         playerSystem = scene.newSystem(mobMaterial)
         playerSystem.newEntity(player)
                 .attachTransformComponent()
-                .attachSpriteComponent()
+                .attachRenderComponent(mobMaterial, quadMesh)
                 .attachAnimatorComponent()
                 .build()
         addMoveComponent(player.transform, 0.0f, 0.0f)
+
 
         level = Level(player, resourceFactory)
 

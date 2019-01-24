@@ -130,7 +130,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             containerSystem.newEntity(container)
                     .attachTransformComponent()
                     .attachSpriteComponent()
-                    .attachBurstParticleEmitter(resourceFactory, 25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
+                    .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                     .build()
 
             val emitter = containerSystem.findBurstEmitterComponent (container.getId())!!
@@ -160,10 +160,10 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 torchSystem.newEntity(et)
                         .attachTransformComponent()
                         .attachSpriteComponent()
-                        .attachParticleEmitter(resourceFactory, 10, 16.0f, 1.0f, Vector2f(0.0f, -10.0f), DirectionType.LINEAR, 4.0f, 0.5f)
+                        .attachParticleEmitter(10, 16.0f, 1.0f, Vector2f(0.0f, -10.0f), DirectionType.LINEAR, 4.0f, 0.5f)
                         .build()
                 val etTransform = torchSystem.findTransformComponent(et.getId())
-                etTransform!!.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat() + 256, 18.0f)
+                etTransform!!.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat(), 18.0f)
                 etTransform.sx = 48.0f
                 etTransform.sy = 48.0f
 
@@ -192,7 +192,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f))
                 torchSystem.newEntity(et)
                         .attachTransformComponent()
-                        .attachParticleEmitter(resourceFactory, 20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
+                        .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
                         .build()
                 val etTransform = torchSystem.findTransformComponent(et.getId())
                 etTransform!!.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)

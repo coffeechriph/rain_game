@@ -92,7 +92,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     fun update(deltaTime: Float, input: Input) {
         if (delayLightUpdate == 0) {
-            generateLightMap()
+            //generateLightMap()
             delayLightUpdate = 2
         }
         else {
@@ -493,7 +493,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         val lightTransform = Transform()
         lightTransform.z = 17.0f
-        scene.addSimpleDraw(SimpleDraw(lightTransform, lightMap, lightMapMaterial))
+        //scene.addSimpleDraw(SimpleDraw(lightTransform, lightMap, lightMapMaterial))
 
         enemyTargetSystem = scene.newSystem(itemMaterial)
         enemyTargetEntity = Entity()
@@ -638,7 +638,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
 
-        generateLightMap()
+        //generateLightMap()
 
         if (firstBuild) {
             backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
@@ -893,7 +893,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val et = LightSource(exitPosition.x / width, exitPosition.y / height, Vector3f(0.9f, 0.55f, 0.1f))
         torchSystem.newEntity(et)
                 .attachTransformComponent()
-                .attachParticleEmitter(resourceFactory, 20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
+                .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
                 .build()
         val etTransform = torchSystem.findTransformComponent(et.getId())
         etTransform!!.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
@@ -912,7 +912,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         containerSystem.newEntity(container)
                 .attachTransformComponent()
                 .attachSpriteComponent()
-                .attachBurstParticleEmitter(resourceFactory, 25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
+                .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                 .build()
 
         val emitter2 = containerSystem.findBurstEmitterComponent (container.getId())!!
