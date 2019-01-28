@@ -7,7 +7,7 @@ import rain.api.entity.*
 import rain.api.scene.Scene
 import java.util.*
 
-val GLOBAL_ANIMATION_SPEED = 1.0f
+const val GLOBAL_ANIMATION_SPEED = 3.0f
 class Player : Entity() {
     class InputTimestamp(var direction: Direction, var time: Long)
     var playerMovedCell = false
@@ -65,6 +65,8 @@ class Player : Entity() {
     var targetedEnemy: Enemy? = null
         private set
     private var targetedEnemyIndex = -1
+    lateinit var chestEntity: Entity
+    lateinit var equipmentSystem: EntitySystem<Entity>
 
     fun damagePlayer(value: Int, fromX: Float, fromY: Float) {
         damageShake = 1.0f
@@ -150,7 +152,7 @@ class Player : Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         renderComponent = getRenderComponents()!![0]
         transform = system.findTransformComponent(getId())!!
-        animator = system.findAnimatorComponent(getId())!!
+        animator = getAnimatorComponent()!![0]
         transform.setScale(64.0f,64.0f)
 
         animator.addAnimation("idle_down", 0, 0, 0, 0.0f)
@@ -171,6 +173,13 @@ class Player : Entity() {
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+        val chestTransform = equipmentSystem.findTransformComponent(chestEntity.getId())!!
+        chestTransform.x = transform.x
+        chestTransform.y = transform.y
+        chestTransform.sx = transform.sx
+        chestTransform.sy = transform.sy
+        chestTransform.z = transform.z + 0.1f
+
         transform.z = 1.0f + transform.y * 0.001f
 
         if (damageShake > 0.0f) {

@@ -2,6 +2,7 @@ package roguelike.Level
 
 import roguelike.Entity.*
 import org.joml.*
+import rain.api.entity.Animator
 import rain.api.entity.DirectionType
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
@@ -80,10 +81,11 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 MiniKrac(random, player)
             }
 
+            val enemyAnimator = Animator()
             enemySystem.newEntity(kracGuy)
                     .attachTransformComponent()
                     .attachSpriteComponent()
-                    .attachAnimatorComponent()
+                    .attachAnimatorComponent(enemyAnimator)
                     .build()
 
             enemyAttackSystem.newEntity(kracGuy.attackAreaVisual)

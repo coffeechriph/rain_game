@@ -36,7 +36,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
         transform.setPosition(1200.0f,600.0f, 9.0f)
         transform.setScale(96.0f,96.0f)
 
-        val animator = system.findAnimatorComponent(getId())!!
+        val animator = getAnimatorComponent()!![0]
         animator.addAnimation("down", 0, 0, 0, 0.0f)
         animator.addAnimation("right", 1, 1, 0, 0.0f)
         animator.addAnimation("up", 2, 2, 0, 0.0f)
@@ -49,7 +49,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
         val sprite = system.findSpriteComponent(getId())!!
-        val animator = system.findAnimatorComponent(getId())!!
+        val animator = getAnimatorComponent()!![0]
 
         if (active) {
             transform.z = parentTransform.z + 0.01f

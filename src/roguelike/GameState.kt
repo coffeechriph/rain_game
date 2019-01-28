@@ -9,10 +9,7 @@ import org.joml.Vector2f
 import rain.State
 import rain.StateManager
 import rain.api.Input
-import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
-import rain.api.entity.addMoveComponent
-import rain.api.entity.changeMoveComponent
+import rain.api.entity.*
 import rain.api.gfx.*
 import rain.api.gui.Container
 import rain.api.gui.Gui
@@ -25,8 +22,12 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private lateinit var attackMaterial: Material
     private lateinit var mobMaterial: Material
     private lateinit var mobTexture: Texture2d
+    private lateinit var equipmentTexture: Texture2d
+    private lateinit var equipmentMaterial: Material
     private lateinit var healthMaterial: Material
     private lateinit var playerSystem: EntitySystem<Player>
+    private lateinit var equipmentSystem: EntitySystem<Entity>
+    private var playerAnimator = Animator()
     private lateinit var attackSystem: EntitySystem<Attack>
     private lateinit var healthBarSystem: EntitySystem<HealthBar>
     private lateinit var player: Player
@@ -58,15 +59,41 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .withBatching(false)
                 .build()
 
+        equipmentTexture = resourceFactory.buildTexture2d()
+            .withName("equipmentTexture")
+            .fromImageFile("./data/textures/chest-armor.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+
+        equipmentTexture.setTiledTexture(16,16)
+        // TODO: Implement a different shader which is able to
+        // make use of the same animator but offset the whole texture
+        // depending on which equipment type is equipped. (So we can have 1 texture / equipment type)
+        equipmentMaterial = resourceFactory.buildMaterial()
+            .withTexture(equipmentTexture)
+            .withVertexShader("./data/shaders/basic.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withName("equipmentMaterial")
+            .build()
+
         player = Player()
         playerSystem = scene.newSystem(mobMaterial)
         playerSystem.newEntity(player)
                 .attachTransformComponent()
                 .attachRenderComponent(mobMaterial, quadMesh)
-                .attachAnimatorComponent()
+                .attachAnimatorComponent(playerAnimator)
                 .build()
         addMoveComponent(player.transform, 0.0f, 0.0f)
 
+        val playerChestEntity = Entity()
+        equipmentSystem = scene.newSystem(equipmentMaterial)
+        equipmentSystem.newEntity(playerChestEntity)
+            .attachTransformComponent()
+            .attachRenderComponent(equipmentMaterial, quadMesh)
+            .attachAnimatorComponent(playerAnimator)
+            .build()
+        player.chestEntity = playerChestEntity
+        player.equipmentSystem = equipmentSystem
 
         level = Level(player, resourceFactory)
 
@@ -89,7 +116,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         attackSystem.newEntity(player.attack)
                 .attachTransformComponent()
                 .attachSpriteComponent()
-                .attachAnimatorComponent()
+                .attachAnimatorComponent(Animator())
                 .build()
 
         val healthTexture = resourceFactory.buildTexture2d()

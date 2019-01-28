@@ -147,7 +147,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         transform = system.findTransformComponent(getId())!!
         sprite = system.findSpriteComponent(getId())!!
-        animator = system.findAnimatorComponent(getId())!!
+        animator = getAnimatorComponent()!![0]
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
