@@ -22,11 +22,20 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private lateinit var attackMaterial: Material
     private lateinit var mobMaterial: Material
     private lateinit var mobTexture: Texture2d
-    private lateinit var equipmentTexture: Texture2d
-    private lateinit var equipmentMaterial: Material
+    private lateinit var chestArmorTexture: Texture2d
+    private lateinit var chestArmorMaterial: Material
+    private lateinit var legsArmorTexture: Texture2d
+    private lateinit var legsArmorMaterial: Material
+    private lateinit var handsArmorTexture: Texture2d
+    private lateinit var handsArmorMaterial: Material
+    private lateinit var bootsArmorTexture: Texture2d
+    private lateinit var bootsArmorMaterial: Material
     private lateinit var healthMaterial: Material
     private lateinit var playerSystem: EntitySystem<Player>
-    private lateinit var equipmentSystem: EntitySystem<Entity>
+    private lateinit var chestArmorSystem: EntitySystem<Entity>
+    private lateinit var legsArmorSystem: EntitySystem<Entity>
+    private lateinit var bootsArmorSystem: EntitySystem<Entity>
+    private lateinit var handsArmorSystem: EntitySystem<Entity>
     private var playerAnimator = Animator()
     private lateinit var attackSystem: EntitySystem<Attack>
     private lateinit var healthBarSystem: EntitySystem<HealthBar>
@@ -59,24 +68,77 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .withBatching(false)
                 .build()
 
-        equipmentTexture = resourceFactory.buildTexture2d()
-            .withName("equipmentTexture")
+        chestArmorTexture = resourceFactory.buildTexture2d()
+            .withName("chestArmorTexture")
             .fromImageFile("./data/textures/chest-armor.png")
             .withFilter(TextureFilter.NEAREST)
             .build()
+        chestArmorTexture.setTiledTexture(16,16)
 
-        equipmentTexture.setTiledTexture(16,16)
-        // TODO: Implement a different shader which is able to
-        // make use of the same animator but offset the whole texture
-        // depending on which equipment type is equipped. (So we can have 1 texture / equipment type)
-        equipmentMaterial = resourceFactory.buildMaterial()
-            .withTexture(equipmentTexture)
-            .withVertexShader("./data/shaders/basic.vert.spv")
+        chestArmorMaterial = resourceFactory.buildMaterial()
+            .withTexture(chestArmorTexture)
+            .withVertexShader("./data/shaders/equipment.vert.spv")
             .withFragmentShader("./data/shaders/basic.frag.spv")
-            .withName("equipmentMaterial")
+            .withName("chestArmorMaterial")
             .build()
 
+        legsArmorTexture = resourceFactory.buildTexture2d()
+            .withName("legArmorTexture")
+            .fromImageFile("./data/textures/leg-armor.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+        legsArmorTexture.setTiledTexture(16,16)
+
+        legsArmorMaterial = resourceFactory.buildMaterial()
+            .withTexture(legsArmorTexture)
+            .withVertexShader("./data/shaders/equipment.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withName("legsArmorMaterial")
+            .build()
+
+        bootsArmorTexture = resourceFactory.buildTexture2d()
+            .withName("bootsArmorTexture")
+            .fromImageFile("./data/textures/boots-armor.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+        bootsArmorTexture.setTiledTexture(16,16)
+
+        bootsArmorMaterial = resourceFactory.buildMaterial()
+            .withTexture(bootsArmorTexture)
+            .withVertexShader("./data/shaders/equipment.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withName("bootsArmorMaterial")
+            .build()
+
+        handsArmorTexture = resourceFactory.buildTexture2d()
+            .withName("handsArmorTexture")
+            .fromImageFile("./data/textures/hands-armor.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+        handsArmorTexture.setTiledTexture(16,16)
+
+        handsArmorMaterial = resourceFactory.buildMaterial()
+            .withTexture(handsArmorTexture)
+            .withVertexShader("./data/shaders/equipment.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withName("handsArmorMaterial")
+            .build()
+
+        chestArmorSystem = scene.newSystem(chestArmorMaterial)
+        legsArmorSystem = scene.newSystem(legsArmorMaterial)
+        bootsArmorSystem = scene.newSystem(bootsArmorMaterial)
+        handsArmorSystem = scene.newSystem(handsArmorMaterial)
+
         player = Player()
+        player.chestArmorSystem = chestArmorSystem
+        player.chestArmorMaterial = chestArmorMaterial
+        player.legsArmorSystem = legsArmorSystem
+        player.legsArmorMaterial = legsArmorMaterial
+        player.bootsArmorSystem = bootsArmorSystem
+        player.bootsArmorMaterial = bootsArmorMaterial
+        player.handsArmorSystem = handsArmorSystem
+        player.handsArmorMaterial = handsArmorMaterial
+        player.equipmentMesh = quadMesh
         playerSystem = scene.newSystem(mobMaterial)
         playerSystem.newEntity(player)
                 .attachTransformComponent()
@@ -84,16 +146,6 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .attachAnimatorComponent(playerAnimator)
                 .build()
         addMoveComponent(player.transform, 0.0f, 0.0f)
-
-        val playerChestEntity = Entity()
-        equipmentSystem = scene.newSystem(equipmentMaterial)
-        equipmentSystem.newEntity(playerChestEntity)
-            .attachTransformComponent()
-            .attachRenderComponent(equipmentMaterial, quadMesh)
-            .attachAnimatorComponent(playerAnimator)
-            .build()
-        player.chestEntity = playerChestEntity
-        player.equipmentSystem = equipmentSystem
 
         level = Level(player, resourceFactory)
 

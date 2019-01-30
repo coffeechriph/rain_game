@@ -4,6 +4,8 @@ import roguelike.Level.Level
 import org.joml.Vector2i
 import rain.api.Input
 import rain.api.entity.*
+import rain.api.gfx.Material
+import rain.api.gfx.Mesh
 import rain.api.scene.Scene
 import java.util.*
 
@@ -20,6 +22,14 @@ class Player : Entity() {
     lateinit var transform: Transform
     lateinit var renderComponent: RenderComponent
     lateinit var animator: Animator
+    lateinit var chestArmor: Entity
+    lateinit var legsArmor: Entity
+    lateinit var bootsArmor: Entity
+    lateinit var handsArmor: Entity
+    lateinit var chestArmorSystem: EntitySystem<Entity>
+    lateinit var legsArmorSystem: EntitySystem<Entity>
+    lateinit var handsArmorSystem: EntitySystem<Entity>
+    lateinit var bootsArmorSystem: EntitySystem<Entity>
 
     var health = 107
     var stamina = 5
@@ -65,8 +75,11 @@ class Player : Entity() {
     var targetedEnemy: Enemy? = null
         private set
     private var targetedEnemyIndex = -1
-    lateinit var chestEntity: Entity
-    lateinit var equipmentSystem: EntitySystem<Entity>
+    lateinit var chestArmorMaterial: Material
+    lateinit var legsArmorMaterial: Material
+    lateinit var handsArmorMaterial: Material
+    lateinit var bootsArmorMaterial: Material
+    lateinit var equipmentMesh: Mesh
 
     fun damagePlayer(value: Int, fromX: Float, fromY: Float) {
         damageShake = 1.0f
@@ -170,15 +183,65 @@ class Player : Entity() {
 
         attack = Attack(transform)
         attack.attacker = this
+
+        chestArmor = Entity()
+        chestArmorSystem.newEntity(chestArmor)
+            .attachTransformComponent()
+            .attachRenderComponent(chestArmorMaterial, equipmentMesh)
+            .attachAnimatorComponent(animator)
+            .build()
+
+        legsArmor = Entity()
+        legsArmorSystem.newEntity(legsArmor)
+            .attachTransformComponent()
+            .attachRenderComponent(legsArmorMaterial, equipmentMesh)
+            .attachAnimatorComponent(animator)
+            .build()
+
+        handsArmor = Entity()
+        handsArmorSystem.newEntity(handsArmor)
+            .attachTransformComponent()
+            .attachRenderComponent(handsArmorMaterial, equipmentMesh)
+            .attachAnimatorComponent(animator)
+            .build()
+
+        bootsArmor = Entity()
+        bootsArmorSystem.newEntity(bootsArmor)
+            .attachTransformComponent()
+            .attachRenderComponent(bootsArmorMaterial, equipmentMesh)
+            .attachAnimatorComponent(animator)
+            .build()
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
-        val chestTransform = equipmentSystem.findTransformComponent(chestEntity.getId())!!
+        val chestTransform = chestArmorSystem.findTransformComponent(chestArmor.getId())!!
+        val legsTransform = legsArmorSystem.findTransformComponent(legsArmor.getId())!!
+        val handsTransform = handsArmorSystem.findTransformComponent(handsArmor.getId())!!
+        val bootsTransform = bootsArmorSystem.findTransformComponent(bootsArmor.getId())!!
+
         chestTransform.x = transform.x
         chestTransform.y = transform.y
         chestTransform.sx = transform.sx
         chestTransform.sy = transform.sy
         chestTransform.z = transform.z + 0.1f
+
+        legsTransform.x = transform.x
+        legsTransform.y = transform.y
+        legsTransform.sx = transform.sx
+        legsTransform.sy = transform.sy
+        legsTransform.z = transform.z + 0.1f
+
+        handsTransform.x = transform.x
+        handsTransform.y = transform.y
+        handsTransform.sx = transform.sx
+        handsTransform.sy = transform.sy
+        handsTransform.z = transform.z + 0.1f
+
+        bootsTransform.x = transform.x
+        bootsTransform.y = transform.y
+        bootsTransform.sx = transform.sx
+        bootsTransform.sy = transform.sy
+        bootsTransform.z = transform.z + 0.1f
 
         transform.z = 1.0f + transform.y * 0.001f
 
