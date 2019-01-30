@@ -76,6 +76,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private val activeContainers = ArrayList<Container>()
     private val activeLightSources = ArrayList<LightSource>()
     private val collisionBoxes = ArrayList<Vector4i>()
+    lateinit var quadMesh: Mesh
 
     fun collides(x: Float, y: Float, w: Float, h: Float): Boolean {
         val w2 = w * 0.5f
@@ -134,8 +135,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         if (player.targetedEnemy != null) {
             val enemy = player.targetedEnemy!!
             if (!enemy.sprite.visible) {
-                val targetSprite = enemyTargetSystem.findSpriteComponent(enemyTargetEntity.getId())!!
-                targetSprite.visible = false
+                enemyTargetEntity.getRenderComponents()!![0].visible = false
             }
             else {
                 var pdx = player.transform.x - enemy.transform.x
@@ -159,8 +159,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     }
                 }
 
-                val targetSprite = enemyTargetSystem.findSpriteComponent(enemyTargetEntity.getId())!!
-                targetSprite.visible = true
+                enemyTargetEntity.getRenderComponents()!![0].visible = true
 
                 val targetTransform = enemyTargetSystem.findTransformComponent(enemyTargetEntity.getId())!!
                 targetTransform.z = 19.0f
@@ -171,8 +170,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
         else {
-            val targetSprite = enemyTargetSystem.findSpriteComponent(enemyTargetEntity.getId())!!
-            targetSprite.visible = false
+            enemyTargetEntity.getRenderComponents()!![0].visible = false
         }
 
         for (enemy in activeEnemies) {
@@ -499,10 +497,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         enemyTargetEntity = Entity()
         enemyTargetSystem.newEntity(enemyTargetEntity)
                 .attachTransformComponent()
-                .attachSpriteComponent()
-        val enemyTargetEntitySprite = enemyTargetSystem.findSpriteComponent(enemyTargetEntity.getId())!!
-        enemyTargetEntitySprite.visible = false
-        enemyTargetEntitySprite.textureTileOffset.set(4,7)
+                .attachRenderComponent(itemMaterial, quadMesh)
+                //.attachSpriteComponent()
+        val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()!![0]
+        enemyTargetEntityRenderer.visible = false
+        enemyTargetEntityRenderer.textureTileOffset.set(4,7)
     }
 
     fun switchCell(resourceFactory: ResourceFactory, cellX: Int, cellY: Int) {

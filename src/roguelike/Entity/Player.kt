@@ -229,19 +229,19 @@ class Player : Entity() {
         legsTransform.y = transform.y
         legsTransform.sx = transform.sx
         legsTransform.sy = transform.sy
-        legsTransform.z = transform.z + 0.1f
+        legsTransform.z = transform.z + 0.2f
 
         handsTransform.x = transform.x
         handsTransform.y = transform.y
         handsTransform.sx = transform.sx
         handsTransform.sy = transform.sy
-        handsTransform.z = transform.z + 0.1f
+        handsTransform.z = transform.z + 0.3f
 
         bootsTransform.x = transform.x
         bootsTransform.y = transform.y
         bootsTransform.sx = transform.sx
         bootsTransform.sy = transform.sy
-        bootsTransform.z = transform.z + 0.1f
+        bootsTransform.z = transform.z + 0.4f
 
         transform.z = 1.0f + transform.y * 0.001f
 

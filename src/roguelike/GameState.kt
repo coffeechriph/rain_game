@@ -80,6 +80,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
             .withVertexShader("./data/shaders/equipment.vert.spv")
             .withFragmentShader("./data/shaders/basic.frag.spv")
             .withName("chestArmorMaterial")
+            .withDepthWrite(false)
+            .withDepthTest(false)
             .build()
 
         legsArmorTexture = resourceFactory.buildTexture2d()
@@ -94,6 +96,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
             .withVertexShader("./data/shaders/equipment.vert.spv")
             .withFragmentShader("./data/shaders/basic.frag.spv")
             .withName("legsArmorMaterial")
+            .withDepthWrite(false)
+            .withDepthTest(false)
             .build()
 
         bootsArmorTexture = resourceFactory.buildTexture2d()
@@ -108,6 +112,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
             .withVertexShader("./data/shaders/equipment.vert.spv")
             .withFragmentShader("./data/shaders/basic.frag.spv")
             .withName("bootsArmorMaterial")
+            .withDepthWrite(false)
+            .withDepthTest(false)
             .build()
 
         handsArmorTexture = resourceFactory.buildTexture2d()
@@ -122,6 +128,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
             .withVertexShader("./data/shaders/equipment.vert.spv")
             .withFragmentShader("./data/shaders/basic.frag.spv")
             .withName("handsArmorMaterial")
+            .withDepthWrite(false)
+            .withDepthTest(false)
             .build()
 
         chestArmorSystem = scene.newSystem(chestArmorMaterial)
@@ -148,6 +156,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         addMoveComponent(player.transform, 0.0f, 0.0f)
 
         level = Level(player, resourceFactory)
+        level.quadMesh = quadMesh
 
         val attackTexture = resourceFactory.buildTexture2d()
                 .withName("attackTexture")
