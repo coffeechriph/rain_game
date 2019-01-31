@@ -15,7 +15,6 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
     var cellY = 0
 
     lateinit var transform: Transform
-    lateinit var sprite: Sprite
 
     // TODO: Constant window size
     fun setPosition(pos: Vector2i) {
@@ -29,17 +28,14 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         transform = system.findTransformComponent(getId())!!
-        sprite = system.findSpriteComponent(getId())!!
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
         if (open) {
-            sprite.textureTileOffset.x = 1
-            sprite.textureTileOffset.y = containerType+4
+            getRenderComponents()!![0].textureTileOffset = Vector2i(1,containerType+4)
         }
         else {
-            sprite.textureTileOffset.x = 0
-            sprite.textureTileOffset.y = containerType+4
+            getRenderComponents()!![0].textureTileOffset = Vector2i(0,containerType+4)
         }
     }
 }

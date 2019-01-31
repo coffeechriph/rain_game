@@ -116,7 +116,7 @@ class Player : Entity() {
 
     fun targetEnemy(enemies: ArrayList<Enemy>, input: Input) {
         if (targetedEnemy != null) {
-            if (!targetedEnemy!!.sprite.visible) {
+            if (!targetedEnemy!!.getRenderComponents()!![0].visible) {
                 targetedEnemy = null
             }
         }
@@ -130,7 +130,7 @@ class Player : Entity() {
                     targetedEnemyIndex %= enemies.size
                     for ((index, enemy) in enemies.withIndex()) {
                         if (index == targetedEnemyIndex) {
-                            if (enemy.sprite.visible) {
+                            if (enemy.getRenderComponents()!![0].visible) {
                                 targetedEnemy = enemy
                                 break
                             }

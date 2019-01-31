@@ -196,7 +196,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         healthBarSystem = scene.newSystem(healthMaterial)
 
         // TODO: Constant window dimensions
-        level.create(resourceFactory, scene, 8960 / 64, 5376 / 64, 1280 / 64, 768 / 64)
+        level.create(resourceFactory, scene, healthBarSystem, 8960 / 64, 5376 / 64, 1280 / 64, 768 / 64)
         level.buildFirstRoom()
         scene.addTilemap(level.backTilemap)
         scene.addTilemap(level.frontTilemap)
@@ -206,7 +206,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         player.setPosition(level.getFirstTilePos())
         changeMoveComponent(player.transform, 0.0f, 0.0f)
-        level.switchCell(resourceFactory, player.cellX, player.cellY)
+        level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
 
         inventory = Inventory(gui, player)
         player.inventory = inventory
@@ -224,7 +224,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         }
 
         if (player.playerMovedCell) {
-            level.switchCell(resourceFactory, player.cellX, player.cellY)
+            level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
             player.playerMovedCell = false
         }
 
@@ -239,7 +239,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
             player.currentLevel += 1
             level.build(System.currentTimeMillis(), healthBarSystem, healthMaterial)
             player.setPosition(level.getFirstTilePos())
-            level.switchCell(resourceFactory, player.cellX, player.cellY)
+            level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
 
             container.removeText(currentLevelText)
             currentLevelText = container.addText("Current Level: ${player.currentLevel}", 0.0f, 0.0f, background = true)

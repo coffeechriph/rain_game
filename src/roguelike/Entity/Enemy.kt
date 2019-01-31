@@ -33,7 +33,6 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
     var direction: Direction = Direction.NONE
     var lastPlayerAngle = 0.0f
     lateinit var transform: Transform
-    lateinit var sprite: Sprite
     lateinit var animator: Animator
 
     protected var attackTimeoutValue = 30
@@ -146,7 +145,6 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         transform = system.findTransformComponent(getId())!!
-        sprite = system.findSpriteComponent(getId())!!
         animator = getAnimatorComponent()!![0]
     }
 

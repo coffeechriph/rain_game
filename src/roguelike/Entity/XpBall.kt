@@ -13,7 +13,6 @@ class XpBall(private val player: Player): Entity() {
     var cellY = 0
     var pickedUp = false
     lateinit var transform: Transform
-    lateinit var sprite: Sprite
 
     private var time = 0.0f
     private var beginPickup = false
@@ -32,11 +31,10 @@ class XpBall(private val player: Player): Entity() {
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         transform = system.findTransformComponent(getId())!!
-        sprite = system.findSpriteComponent(getId())!!
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
-        if (sprite.visible) {
+        if (getRenderComponents()!![0].visible) {
             time += 1.0f / 60.0f
             transform.y += Math.sin(time.toDouble()).toFloat() * 0.1f
 
@@ -61,7 +59,7 @@ class XpBall(private val player: Player): Entity() {
                         player.transform.y >= transform.y - 8 && player.transform.y <= transform.y + 8) {
                     pickedUp = true
                     beginPickup = false
-                    sprite.visible = false
+                    getRenderComponents()!![0].visible = false
                     player.addXp(5 * player.currentLevel)
                 }
             }

@@ -134,7 +134,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         player.targetEnemy(activeEnemies, input)
         if (player.targetedEnemy != null) {
             val enemy = player.targetedEnemy!!
-            if (!enemy.sprite.visible) {
+            if (!enemy.getRenderComponents()!![0].visible) {
                 enemyTargetEntity.getRenderComponents()!![0].visible = false
             }
             else {
@@ -175,13 +175,13 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         for (enemy in activeEnemies) {
             if (enemy.health <= 0) {
-                if (enemy.sprite.visible) {
+                if (enemy.getRenderComponents()!![0].visible) {
                     for (i in 0 until random.nextInt(5)+1) {
                         // Add xp balls to the world
                         val xpBall = XpBall(player)
                         xpBallSystem.newEntity(xpBall)
                                 .attachTransformComponent()
-                                .attachSpriteComponent()
+                                .attachRenderComponent(itemMaterial, quadMesh)
                                 .build()
 
                         var px = enemy.transform.x.toInt() + (Math.sin(random.nextFloat()*Math.PI*2) * 32.0f).toInt()
@@ -204,12 +204,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                         xpBall.setPosition(xpBallSystem, Vector2i(px, py))
                         xpBall.transform.sx = random.nextFloat() * 16.0f + 40.0f
                         xpBall.transform.sy = random.nextFloat() * 16.0f + 40.0f
-                        xpBall.sprite.textureTileOffset.x = 5
-                        xpBall.sprite.textureTileOffset.y = 6
+                        xpBall.getRenderComponents()!![0].textureTileOffset = Vector2i(5,6)
                     }
                 }
 
-                enemy.sprite.visible = false
+                enemy.getRenderComponents()!![0].visible = false
                 enemy.healthBar.sprite.visible = false
                 continue
             }
@@ -361,7 +360,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
                     levelItemSystem.newEntity(item)
                             .attachTransformComponent()
-                            .attachSpriteComponent()
+                            .attachRenderComponent(itemMaterial, quadMesh)
                             .build()
                     val angle = random.nextFloat()*Math.PI
                     val direction = Vector2f(Math.sin(angle).toFloat(), Math.cos(angle).toFloat())
@@ -373,8 +372,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     item.transform.sx = 40.0f
                     item.transform.sy = 40.0f
                     item.transform.z = 2.0f
-                    item.sprite.textureTileOffset.x = 3
-                    item.sprite.textureTileOffset.y = 4 + random.nextInt(3)
+                    item.getRenderComponents()!![0].textureTileOffset = Vector2i(3,4+random.nextInt(3))
                 }
             }
         }
@@ -384,7 +382,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         return Vector2i(startPosition.x * 64, startPosition.y * 64)
     }
 
-    fun create(resourceFactory: ResourceFactory, scene: Scene, mapWidth: Int, mapHeight: Int, width: Int, height: Int) {
+    fun create(resourceFactory: ResourceFactory, scene: Scene, healthBarSystem: EntitySystem<HealthBar>, mapWidth: Int, mapHeight: Int, width: Int, height: Int) {
         firstBuild = true
         maxCellX = mapWidth / width
         maxCellY = mapHeight / height
@@ -498,20 +496,20 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         enemyTargetSystem.newEntity(enemyTargetEntity)
                 .attachTransformComponent()
                 .attachRenderComponent(itemMaterial, quadMesh)
-                //.attachSpriteComponent()
+
         val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()!![0]
         enemyTargetEntityRenderer.visible = false
         enemyTargetEntityRenderer.textureTileOffset.set(4,7)
     }
 
-    fun switchCell(resourceFactory: ResourceFactory, cellX: Int, cellY: Int) {
+    fun switchCell(resourceFactory: ResourceFactory, healthBarSystem: EntitySystem<HealthBar>, cellX: Int, cellY: Int) {
         for (enemy in activeEnemies) {
-            enemy.sprite.visible = false
+            enemy.getRenderComponents()!![0].visible = false
             enemy.healthBar.sprite.visible = false
         }
 
         for (container in activeContainers) {
-            container.sprite.visible = false
+            container.getRenderComponents()!![0].visible = false
         }
 
         for (lights in activeLightSources) {
@@ -537,9 +535,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 }
 
                 if (enemy.cellX == cellX && enemy.cellY == cellY) {
-                    enemy.sprite.visible = enemy.health > 0 && enemy.cellX == cellX && enemy.cellY == cellY
-                    enemy.healthBar.sprite.visible = enemySystem.findSpriteComponent(enemy.getId())!!.visible
-                    if (enemy.sprite.visible) {
+                    enemy.getRenderComponents()!![0].visible = enemy.health > 0 && enemy.cellX == cellX && enemy.cellY == cellY
+                    enemy.healthBar.sprite.visible = enemy.getRenderComponents()!![0].visible
+                    if (enemy.getRenderComponents()!![0].visible) {
                         activeEnemies.add(enemy)
                     }
                 }
@@ -551,9 +549,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (container in room.containers) {
                 if (container.cellX == cellX && container.cellY == cellY) {
-                    container.sprite.visible = container.cellX == cellX && container.cellY == cellY
+                    container.getRenderComponents()!![0].visible = container.cellX == cellX && container.cellY == cellY
                     val emitter = container.getBurstParticleEmitters()!![0]
-                    emitter.enabled = container.sprite.visible
+                    emitter.enabled = container.getRenderComponents()!![0].visible
                     activeContainers.add(container)
                 }
             }
@@ -677,7 +675,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         // Put out light values at XpBalls
         for (xp in xpBallSystem.getEntityList()) {
-            if (xp!!.sprite.visible) {
+            if (xp!!.getRenderComponents()!![0].visible) {
                 val t = xpBallSystem.findTransformComponent(xp.getId())!!
                 val x = (t.x / 64.0f).toInt()
                 val y = (t.y / 64.0f).toInt()
@@ -910,7 +908,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val container = Container(0, 5)
         containerSystem.newEntity(container)
                 .attachTransformComponent()
-                .attachSpriteComponent()
+                .attachRenderComponent(itemMaterial, quadMesh)
                 .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                 .build()
 
@@ -924,7 +922,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         emitter2.enabled = true
 
         container.setPosition(Vector2i((tx+1)*64 + 32, ty*64 + 32))
-        container.sprite.visible = true
+        container.getRenderComponents()!![0].visible = true
         room.containers.add(container)
     }
 
@@ -1506,9 +1504,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         for (room in rooms) {
             val lightCount = random.nextInt(5) + 3
             val thisRoomEnemyCount = (room.tiles.size/64)
-            room.generateEnemiesInRoom(random, enemySystem, enemyAttackSystem, player, thisRoomEnemyCount, healthBarSystem)
+            room.generateEnemiesInRoom(random, enemySystem, enemyMaterial, quadMesh, enemyAttackSystem, player, thisRoomEnemyCount, healthBarSystem)
             val thisRoomContainerCount = room.tiles.size/72
-            room.generateContainersInRoom(random, thisRoomContainerCount, containerSystem, resourceFactory)
+            room.generateContainersInRoom(random, thisRoomContainerCount, containerSystem, itemMaterial, quadMesh)
             room.generateLightsInRoom(random, map, mapWidth, width, height, lightCount, random.nextInt(10) == 1, torchSystem, resourceFactory)
         }
     }

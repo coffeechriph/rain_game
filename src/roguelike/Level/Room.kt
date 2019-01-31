@@ -6,6 +6,8 @@ import rain.api.entity.Animator
 import rain.api.entity.DirectionType
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
+import rain.api.gfx.Material
+import rain.api.gfx.Mesh
 import rain.api.gfx.ResourceFactory
 import rain.log
 
@@ -66,7 +68,14 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
         return viableTiles.removeAt(rand.nextInt(viableTiles.size))
     }
 
-    internal fun generateEnemiesInRoom(random: Random, enemySystem: EntitySystem<Enemy>, enemyAttackSystem: EntitySystem<Entity>, player: Player, count: Int, healthBarSystem: EntitySystem<HealthBar>) {
+    internal fun generateEnemiesInRoom(random: Random,
+                                       enemySystem: EntitySystem<Enemy>,
+                                       enemyMaterial: Material,
+                                       quadMesh: Mesh,
+                                       enemyAttackSystem: EntitySystem<Entity>,
+                                       player: Player,
+                                       count: Int,
+                                       healthBarSystem: EntitySystem<HealthBar>) {
         for (i in 0 until count) {
             val p = findNoneEdgeTile(random)
             if (p == null) {
@@ -84,7 +93,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             val enemyAnimator = Animator()
             enemySystem.newEntity(kracGuy)
                     .attachTransformComponent()
-                    .attachSpriteComponent()
+                    .attachRenderComponent(enemyMaterial, quadMesh)
                     .attachAnimatorComponent(enemyAnimator)
                     .build()
 
@@ -103,7 +112,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             kracGuy.strength = (random.nextInt(levelFactor) + levelFactor*10 * kracGuy.strengthFactor).toInt()
             kracGuy.agility = (random.nextInt(levelFactor) + levelFactor*4 * kracGuy.agilityFactor).toInt()
             kracGuy.health = (100 + random.nextInt(levelFactor) * kracGuy.healthFactor).toInt()
-            kracGuy.sprite.visible = false
+            kracGuy.getRenderComponents()!![0].visible = false
 
             val et = enemySystem.findTransformComponent(kracGuy.getId())!!
             kracGuy.healthBar.parentTransform = et
@@ -122,7 +131,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
         }
     }
 
-    internal fun generateContainersInRoom(random: Random, count: Int, containerSystem: EntitySystem<Container>, resourceFactory: ResourceFactory) {
+    internal fun generateContainersInRoom(random: Random, count: Int, containerSystem: EntitySystem<Container>, containerMaterial: Material, quadMesh: Mesh) {
         for (i in 0 until count) {
             val tile = findNoneEdgeTile(random)
             if (tile == null) {
@@ -132,7 +141,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             val container = Container(random.nextInt(2), random.nextInt(7) + 1)
             containerSystem.newEntity(container)
                     .attachTransformComponent()
-                    .attachSpriteComponent()
+                    .attachRenderComponent(containerMaterial, quadMesh)
                     .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                     .build()
 
@@ -146,7 +155,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             emitter.enabled = false
 
             container.setPosition(Vector2i(tile.x*64 + 32, tile.y*64 + 32))
-            container.sprite.visible = false
+            container.getRenderComponents()!![0].visible = false
             containers.add(container)
         }
     }
