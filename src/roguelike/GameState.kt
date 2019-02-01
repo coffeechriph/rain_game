@@ -176,7 +176,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         attackSystem = scene.newSystem(attackMaterial)
         attackSystem.newEntity(player.attack)
                 .attachTransformComponent()
-                .attachSpriteComponent()
+                .attachRenderComponent(attackMaterial, quadMesh)
                 .attachAnimatorComponent(Animator())
                 .build()
 

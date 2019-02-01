@@ -209,7 +209,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 }
 
                 enemy.getRenderComponents()!![0].visible = false
-                enemy.healthBar.sprite.visible = false
+                enemy.healthBar.getRenderComponents()!![0].visible = false
                 continue
             }
 
@@ -505,7 +505,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     fun switchCell(resourceFactory: ResourceFactory, healthBarSystem: EntitySystem<HealthBar>, cellX: Int, cellY: Int) {
         for (enemy in activeEnemies) {
             enemy.getRenderComponents()!![0].visible = false
-            enemy.healthBar.sprite.visible = false
+            enemy.healthBar.getRenderComponents()!![0].visible = false
         }
 
         for (container in activeContainers) {
@@ -513,9 +513,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         for (lights in activeLightSources) {
-            val sprite = torchSystem.findSpriteComponent(lights.getId())
-            if (sprite != null) {
-                sprite.visible = false
+            if (lights.getRenderComponents() != null && lights.getRenderComponents()!!.isNotEmpty()) {
+                lights.getRenderComponents()!![0].visible = false
             }
 
             val emitter = lights.getParticleEmitters()!![0]
@@ -536,7 +535,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
                 if (enemy.cellX == cellX && enemy.cellY == cellY) {
                     enemy.getRenderComponents()!![0].visible = enemy.health > 0 && enemy.cellX == cellX && enemy.cellY == cellY
-                    enemy.healthBar.sprite.visible = enemy.getRenderComponents()!![0].visible
+                    enemy.healthBar.getRenderComponents()!![0].visible = enemy.getRenderComponents()!![0].visible
                     if (enemy.getRenderComponents()!![0].visible) {
                         activeEnemies.add(enemy)
                     }
@@ -558,8 +557,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (light in room.torches) {
                 if (light.cellX == cellX && light.cellY == cellY) {
-                    val sprite = torchSystem.findSpriteComponent(light.getId())!!
-                    sprite.visible = true
+                    light.getRenderComponents()!![0].visible = false
 
                     val emitter = light.getParticleEmitters()!![0]
                     emitter.enabled = true
@@ -882,7 +880,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         exitPosition = Vector2i(width/2, height/2)
 
         mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileIndex(2, endRoom.type.ordinal)
-        room.generateLightsInRoom(random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, resourceFactory)
+        room.generateLightsInRoom(random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
 
         // Put campfire next to exit on first level
         val tx = exitPosition.x % width
@@ -1504,10 +1502,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         for (room in rooms) {
             val lightCount = random.nextInt(5) + 3
             val thisRoomEnemyCount = (room.tiles.size/64)
-            room.generateEnemiesInRoom(random, enemySystem, enemyMaterial, quadMesh, enemyAttackSystem, player, thisRoomEnemyCount, healthBarSystem)
+            room.generateEnemiesInRoom(random, enemySystem, enemyMaterial, quadMesh, enemyAttackSystem, player, thisRoomEnemyCount, healthBarSystem, healthBarMaterial, enemyAttackMaterial)
             val thisRoomContainerCount = room.tiles.size/72
             room.generateContainersInRoom(random, thisRoomContainerCount, containerSystem, itemMaterial, quadMesh)
-            room.generateLightsInRoom(random, map, mapWidth, width, height, lightCount, random.nextInt(10) == 1, torchSystem, resourceFactory)
+            room.generateLightsInRoom(random, map, mapWidth, width, height, lightCount, random.nextInt(10) == 1, torchSystem, itemMaterial, quadMesh)
         }
     }
 }

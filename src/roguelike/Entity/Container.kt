@@ -4,7 +4,6 @@ import org.joml.Vector2i
 import rain.api.Input
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
-import rain.api.entity.Sprite
 import rain.api.entity.Transform
 import rain.api.scene.Scene
 

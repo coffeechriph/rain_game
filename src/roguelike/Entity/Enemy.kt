@@ -52,7 +52,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
     private var prepareAttack = 0.0f
     private var attackArea = Vector2f()
     var attackAreaVisual = Entity()
-    lateinit var attackAreaVisualSprite: Sprite
+    lateinit var attackAreaVisualRenderComponent: RenderComponent
     lateinit var attackAreaVisualTransform: Transform
 
     // TODO: Constant window size
@@ -118,7 +118,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
             attackAreaVisualTransform.x = transform.x
             attackAreaVisualTransform.y = transform.y
             attackAreaVisualTransform.z = 1.1f
-            attackAreaVisualSprite.visible = true
+            attackAreaVisualRenderComponent.visible = true
 
             if (direction == Direction.LEFT || direction == Direction.RIGHT) {
                 attackAreaVisualTransform.sy = attackArea.y
@@ -203,7 +203,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
             }
         }
         else {
-            attackAreaVisualSprite.visible = false
+            attackAreaVisualRenderComponent.visible = false
             if (attackTimeout > 0) {
                 attackTimeout -= 1
             }

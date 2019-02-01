@@ -48,7 +48,6 @@ class Attack(private val parentTransform: Transform) : Entity() {
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
-        val sprite = system.findSpriteComponent(getId())!!
         val animator = getAnimatorComponent()!![0]
 
         if (active) {
@@ -77,7 +76,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
                 }
             }
 
-            sprite.visible = true
+            getRenderComponents()!![0].visible = true
             activeTime++
             if (activeTime > 10) {
                 active = false
@@ -85,7 +84,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
             }
         }
         else {
-            sprite.visible = false
+            getRenderComponents()!![0].visible = false
         }
     }
 }
