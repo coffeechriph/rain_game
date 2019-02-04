@@ -51,8 +51,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var torchSystem: EntitySystem<LightSource>
     private var firstBuild = true
 
-    private var mapBackIndices = Array(0){ TileIndex(0, 0) }
-    private var mapFrontIndices = Array(0){ TileIndex(0, 0) }
+    private var mapBackIndices = Array(0){ TileGfxNone }
+    private var mapFrontIndices = Array(0){ TileGfxNone }
     private var rooms = ArrayList<Room>()
     private lateinit var random: Random
     private lateinit var enemySystem: EntitySystem<Enemy>
@@ -93,7 +93,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     fun update(deltaTime: Float, input: Input) {
         if (delayLightUpdate == 0) {
-            //generateLightMap()
+            spreadLightOnTilemap(player.cellX, player.cellY)
             delayLightUpdate = 2
         }
         else {
@@ -574,8 +574,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
 
-        val backIndices = Array(width*height){ TileIndexNone }
-        val frontIndices = Array(width*height){ TileIndexNone }
+        val backIndices = Array(width*height){ TileGfxNone }
+        val frontIndices = Array(width*height){ TileGfxNone }
         var sx = cellX * width
         var sy = cellY * height
 
@@ -633,8 +633,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
 
-        //generateLightMap()
-
         if (firstBuild) {
             backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
             frontTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, frontIndices)
@@ -651,7 +649,34 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
     }
 
-    private fun generateLightMap() {
+    private fun spreadLightOnTilemap(cellX: Int, cellY: Int) {
+        val backIndices = Array(width*height){ TileGfxNone }
+        var sx = cellX * width
+        var sy = cellY * height
+
+        for (i in 0 until width*height) {
+            if (sx + sy*mapWidth >= map.size) {
+                break
+            }
+
+            backIndices[i] = mapBackIndices[sx + sy*mapWidth]
+            backIndices[i].red = 0.0f
+            backIndices[i].green = 0.0f
+            backIndices[i].blue = 0.0f
+            backIndices[i].alpha = 1.0f
+
+            sx += 1
+            if (sx >= cellX * width + width) {
+                sx = cellX * width
+                sy += 1
+            }
+        }
+
+        generateLightMap(backIndices)
+        backTilemap.update(backIndices)
+    }
+
+    private fun generateLightMap(backIndices: Array<TileGfx>) {
         // Clear old light values
         for (i in 0 until lightValues.size) {
             lightValues[i] = Vector4f(0.48f, 0.62f, 0.69f, 0.2f)
@@ -673,7 +698,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         // Put out light values at XpBalls
         for (xp in xpBallSystem.getEntityList()) {
-            if (xp!!.getRenderComponents()!![0].visible) {
+            if (xp!!.getRenderComponents()[0].visible) {
                 val t = xpBallSystem.findTransformComponent(xp.getId())!!
                 val x = (t.x / 64.0f).toInt()
                 val y = (t.y / 64.0f).toInt()
@@ -702,6 +727,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             val topRight = if (ix < width-1 && iy > 0) { lightValues[(ix+1) + (iy-1)*width]} else { lightValues[i] }
             val right = if (ix < width-1) { lightValues[(ix+1) + iy*width] } else { lightValues[i] }
             val botRight = if (ix < width-1 && iy < height-1) { lightValues[(ix+1) + (iy+1)*width] } else { lightValues[i] }
+
+            backIndices[ix + iy * width].red = (lightValues[i].x)
+            backIndices[ix + iy * width].green = (lightValues[i].y)
+            backIndices[ix + iy * width].blue = (lightValues[i].z)
+            backIndices[ix + iy * width].alpha = (lightValues[i].w)
 
             lightVertices[index] = x
             lightVertices[index+1] = y
@@ -868,8 +898,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val room = Room(firstRoomTiles, Vector4i(0,0,width,height),RoomType.DIRT_CAVE)
         rooms.add(room)
 
-        mapBackIndices = Array(mapWidth*mapHeight){ TileIndexNone }
-        mapFrontIndices = Array(mapWidth*mapHeight){ TileIndexNone }
+        mapBackIndices = Array(mapWidth*mapHeight){ TileGfxNone }
+        mapFrontIndices = Array(mapWidth*mapHeight){ TileGfxNone }
         populateTilemap()
 
         // Set position of start and exit
@@ -879,7 +909,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         startPosition = Vector2i(width/2, 3)
         exitPosition = Vector2i(width/2, height/2)
 
-        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileIndex(2, endRoom.type.ordinal)
+        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, endRoom.type.ordinal)
         room.generateLightsInRoom(random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
 
         // Put campfire next to exit on first level
@@ -930,8 +960,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         addWallBlockersAtEdges()
         buildRooms()
 
-        mapBackIndices = Array(mapWidth*mapHeight){ TileIndexNone }
-        mapFrontIndices = Array(mapWidth*mapHeight){ TileIndexNone }
+        mapBackIndices = Array(mapWidth*mapHeight){ TileGfxNone }
+        mapFrontIndices = Array(mapWidth*mapHeight){ TileGfxNone }
         populateTilemap()
 
         // Set position of start and exit
@@ -941,7 +971,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         startPosition = startRoom.findNoneEdgeTile(random)!!
         exitPosition = endRoom.findNoneEdgeTile(random)!!
 
-        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileIndex(2, endRoom.type.ordinal)
+        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, endRoom.type.ordinal)
 
         generateRooms(healthBarSystem, healthBarMaterial)
 
@@ -1020,18 +1050,18 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (tile in room.tiles) {
                 val index = tile.x + tile.y * mapWidth
-                mapBackIndices[index] = TileIndex(0, tileY)
+                mapBackIndices[index] = TileGfx(0, tileY)
 
                 if (tile.y > 0) {
                     if (map[tile.x + (tile.y-1)*mapWidth] == 1) {
-                        mapBackIndices[tile.x + (tile.y - 1) * mapWidth] = TileIndex(1, tileY)
+                        mapBackIndices[tile.x + (tile.y - 1) * mapWidth] = TileGfx(1, tileY)
 
                         if (tile.y > 1) {
                             if (map[tile.x + (tile.y-2)*mapWidth] == 1) {
-                                mapFrontIndices[tile.x + (tile.y - 2) * mapWidth] = TileIndex(3, tileY)
+                                mapFrontIndices[tile.x + (tile.y - 2) * mapWidth] = TileGfx(3, tileY)
                             }
                             else {
-                                mapFrontIndices[tile.x + (tile.y - 2) * mapWidth] = TileIndex(3, tileY)
+                                mapFrontIndices[tile.x + (tile.y - 2) * mapWidth] = TileGfx(3, tileY)
                                 map[tile.x + (tile.y - 2) * mapWidth] = 1
                             }
                         }
@@ -1044,14 +1074,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     if (map[tile.x + (tile.y+1) * mapWidth] == 1 &&
                         map[tile.x + (tile.y+2) * mapWidth] == 1 &&
                         map[tile.x + (tile.y+3) * mapWidth] == 1) {
-                        mapFrontIndices[tile.x + (tile.y+1) * mapWidth] = TileIndex(0, 3)
+                        mapFrontIndices[tile.x + (tile.y+1) * mapWidth] = TileGfx(0, 3)
                         map[tile.x + (tile.y + 1) * mapWidth] = 1
                     }
                 }
 
                 val r = random.nextInt(20)
                 if (r == 1){
-                    mapBackIndices[tile.x + tile.y * mapWidth] = TileIndex(random.nextInt(3) + 4, tileY)
+                    mapBackIndices[tile.x + tile.y * mapWidth] = TileGfx(random.nextInt(3) + 4, tileY)
                 }
             }
         }
