@@ -496,6 +496,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         enemyTargetSystem.newEntity(enemyTargetEntity)
                 .attachTransformComponent()
                 .attachRenderComponent(itemMaterial, quadMesh)
+                .build()
 
         val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()!![0]
         enemyTargetEntityRenderer.visible = false

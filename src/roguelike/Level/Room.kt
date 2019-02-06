@@ -100,6 +100,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             enemyAttackSystem.newEntity(kracGuy.attackAreaVisual)
                     .attachTransformComponent()
                     .attachRenderComponent(enemyAttackMaterial, quadMesh)
+                    .build()
 
             val attackRenderComponent = kracGuy.attackAreaVisual.getRenderComponents()!![0]
             attackRenderComponent.visible = false
