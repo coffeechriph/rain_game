@@ -1,13 +1,13 @@
 package roguelike.Level
 
-import roguelike.Entity.*
 import org.joml.*
-import rain.api.entity.Animator
+import rain.api.components.Animator
 import rain.api.entity.DirectionType
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.Material
 import rain.api.gfx.Mesh
+import roguelike.Entity.*
 
 enum class RoomType {
     DIRT_CAVE,

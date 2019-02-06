@@ -1,12 +1,16 @@
 package roguelike.Entity
 
-import roguelike.Level.Level
 import org.joml.Vector2i
 import rain.api.Input
-import rain.api.entity.*
+import rain.api.components.Animator
+import rain.api.components.RenderComponent
+import rain.api.components.Transform
+import rain.api.entity.Entity
+import rain.api.entity.EntitySystem
 import rain.api.gfx.Material
 import rain.api.gfx.Mesh
 import rain.api.scene.Scene
+import roguelike.Level.Level
 import java.util.*
 
 const val GLOBAL_ANIMATION_SPEED = 3.0f
@@ -158,7 +162,7 @@ class Player : Entity() {
         cellY = pos.y / 768
         transform.x = pos.x.toFloat()%1280
         transform.y = pos.y.toFloat()%768
-        changeMoveComponent(transform, 0.0f, 0.0f)
+        getMoveComponent()!!.update(0.0f, 0.0f)
         playerMovedCell = true
     }
 
@@ -249,12 +253,12 @@ class Player : Entity() {
             val shake = Math.sin(damageShake.toDouble() * Math.PI * 32).toFloat() * 3
             
             if (!level.collides(transform.x + damagePushVelX, transform.y, 64.0f, 64.0f)) {
-                changeMoveComponent(transform, damagePushVelX, 0.0f)
+                getMoveComponent()!!.update(damagePushVelX, 0.0f)
                 isStill = false
             }
 
             if (!level.collides(transform.x, transform.y + damagePushVelY, 64.0f, 64.0f)) {
-                changeMoveComponent(transform, 0.0f, damagePushVelY)
+                getMoveComponent()!!.update(0.0f, damagePushVelY)
                 isStill = false
             }
 
@@ -324,7 +328,7 @@ class Player : Entity() {
             if (inputTimestamps.size <= 0) {
                 if (damageShake <= 0.0f) {
                     if (!isStill) {
-                        changeMoveComponent(transform, 0.0f, 0.0f)
+                        getMoveComponent()!!.update(0.0f, 0.0f)
                         isStill = true
                     }
                 }
@@ -362,7 +366,7 @@ class Player : Entity() {
                 velY = 0.0f
             }
 
-            changeMoveComponent(transform, velX, velY)
+            getMoveComponent()!!.update(velX, velY)
             isStill = false
             keepPlayerWithinBorder(velX, velY)
         }
@@ -386,7 +390,7 @@ class Player : Entity() {
                     velY = 0.0f
                 }
 
-                changeMoveComponent(transform, velX, velY)
+                getMoveComponent()!!.update(velX, velY)
                 isStill = false
                 keepPlayerWithinBorder(velX, velY)
             }
@@ -475,7 +479,7 @@ class Player : Entity() {
         if (transform.x < 0 && velX < 0.0f) {
             if (cellX > 0) {
                 transform.x = 1270.0f
-                changeMoveComponent(transform, velX, velY)
+                getMoveComponent()!!.update(velX, velY)
 
                 playerMovedCell = true
                 cellX -= 1
@@ -484,7 +488,7 @@ class Player : Entity() {
         else if (transform.x > 1280 && velX > 0.0f) {
             if (cellX < level.maxCellX) {
                 transform.x = 10.0f
-                changeMoveComponent(transform, velX, velY)
+                getMoveComponent()!!.update(velX, velY)
 
                 playerMovedCell = true
                 cellX += 1
@@ -494,7 +498,7 @@ class Player : Entity() {
         if (transform.y < 0 && velY < 0.0f) {
             if (cellY > 0) {
                 transform.y = 758.0f
-                changeMoveComponent(transform, velX, velY)
+                getMoveComponent()!!.update(velX, velY)
 
                 playerMovedCell = true
                 cellY -= 1
@@ -503,7 +507,7 @@ class Player : Entity() {
         else if (transform.y > 768 && velY > 0.0f) {
             if (cellY < level.maxCellY) {
                 transform.y = 10.0f
-                changeMoveComponent(transform, velX, velY)
+                getMoveComponent()!!.update(velX, velY)
 
                 playerMovedCell = true
                 cellY += 1

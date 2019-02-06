@@ -1,21 +1,23 @@
 package roguelike
 
-import roguelike.Entity.Attack
-import roguelike.Entity.HealthBar
-import roguelike.Entity.Inventory
-import roguelike.Entity.Player
-import roguelike.Level.Level
 import org.joml.Vector2f
 import rain.State
 import rain.StateManager
 import rain.api.Input
-import rain.api.entity.*
+import rain.api.components.Animator
+import rain.api.entity.Entity
+import rain.api.entity.EntitySystem
 import rain.api.gfx.*
 import rain.api.gui.Container
 import rain.api.gui.Gui
 import rain.api.gui.Text
 import rain.api.scene.Camera
 import rain.api.scene.Scene
+import roguelike.Entity.Attack
+import roguelike.Entity.HealthBar
+import roguelike.Entity.Inventory
+import roguelike.Entity.Player
+import roguelike.Level.Level
 
 class GameState(stateManager: StateManager): State(stateManager) {
     lateinit var quadMesh: Mesh
@@ -150,10 +152,10 @@ class GameState(stateManager: StateManager): State(stateManager) {
         playerSystem = scene.newSystem(mobMaterial)
         playerSystem.newEntity(player)
                 .attachTransformComponent()
+                .attachMoveComponent(0.0f, 0.0f)
                 .attachRenderComponent(mobMaterial, quadMesh)
                 .attachAnimatorComponent(playerAnimator)
                 .build()
-        addMoveComponent(player.transform, 0.0f, 0.0f)
 
         level = Level(player, resourceFactory)
         level.quadMesh = quadMesh
@@ -205,7 +207,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
         scene.activeCamera = camera
 
         player.setPosition(level.getFirstTilePos())
-        changeMoveComponent(player.transform, 0.0f, 0.0f)
+        player.getMoveComponent()!!.update(0.0f, 0.0f)
+        //changeMoveComponent(player.transform, 0.0f, 0.0f)
         level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
 
         inventory = Inventory(gui, player)

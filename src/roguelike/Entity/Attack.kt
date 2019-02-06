@@ -1,9 +1,9 @@
 package roguelike.Entity
 
 import rain.api.Input
+import rain.api.components.Transform
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
-import rain.api.entity.Transform
 import rain.api.scene.Scene
 
 /*

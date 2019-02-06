@@ -2,19 +2,20 @@ package roguelike
 
 import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.system.MemoryUtil
 import rain.State
 import rain.StateManager
 import rain.api.Input
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
-import rain.api.gfx.*
+import rain.api.gfx.Mesh
+import rain.api.gfx.ResourceFactory
+import rain.api.gfx.Texture2d
+import rain.api.gfx.TextureFilter
 import rain.api.gui.Container
 import rain.api.gui.Gui
 import rain.api.gui.ToggleButton
 import rain.api.scene.Camera
 import rain.api.scene.Scene
-import rain.vulkan.VertexAttribute
 
 class MenuState(stateManager: StateManager): State(stateManager) {
     private var camera = Camera(Vector2f(0.0f, 20.0f))

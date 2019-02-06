@@ -5,7 +5,11 @@ import org.joml.Vector2f
 import org.joml.Vector2i
 import org.joml.Vector4f
 import rain.api.Input
-import rain.api.entity.*
+import rain.api.components.Animator
+import rain.api.components.RenderComponent
+import rain.api.components.Transform
+import rain.api.entity.Entity
+import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 import kotlin.math.sin
 
