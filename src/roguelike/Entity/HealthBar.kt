@@ -8,13 +8,12 @@ import rain.api.scene.Scene
 
 class HealthBar: Entity() {
     var parentTransform: Transform? = null
-    lateinit var transform: Transform
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        transform = system.findTransformComponent(getId())!!
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+        val transform = getTransform()!!
         transform.z = 11.0f
 
         if (parentTransform != null) {

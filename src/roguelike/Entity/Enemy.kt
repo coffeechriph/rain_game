@@ -36,7 +36,6 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
     var traverseSleep = 0L
     var direction: Direction = Direction.NONE
     var lastPlayerAngle = 0.0f
-    lateinit var transform: Transform
     lateinit var animator: Animator
 
     protected var attackTimeoutValue = 30
@@ -61,6 +60,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
 
     // TODO: Constant window size
     fun setPosition(pos: Vector2i) {
+        val transform = getTransform()!!
         transform.setScale(80.0f, 80.0f)
         transform.z = 1.0f + pos.y%768 * 0.001f
         cellX = pos.x / 1280
@@ -91,8 +91,9 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
             attacking = true
             attackTimeout = attackTimeoutValue
 
-            var px = (player.transform.x - transform.x)
-            var py = (player.transform.y - transform.y)
+            val transform = getTransform()!!
+            var px = (player.getTransform().x - transform.x)
+            var py = (player.getTransform().y - transform.y)
             val ln = Math.sqrt((px*px+py*py).toDouble()).toFloat()
             px /= ln
             py /= ln
@@ -148,7 +149,6 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        transform = system.findTransformComponent(getId())!!
         animator = getAnimatorComponent()!![0]
     }
 
@@ -159,6 +159,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
 
         if (attacking) {
             if (prepareAttack < 1.0f) {
+                val transform = getTransform()!!
                 if (direction == Direction.LEFT) {
                     attackAreaVisualTransform.sx = attackArea.x * prepareAttack
                     attackAreaVisualTransform.x = transform.x + (attackArea.x * prepareAttack) * 0.5f
@@ -190,6 +191,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
                     damage *= random.nextInt(4) + 2.0f
                 }
 
+                val transform = getTransform()!!
                 val area = when (direction) {
                     Direction.LEFT -> Vector4f(transform.x - 128.0f - 32.0f, transform.y - 24.0f, 128.0f, 48.0f)
                     Direction.RIGHT -> Vector4f(transform.x + 32.0f, transform.y - 24.0f, 128.0f, 48.0f)
@@ -199,8 +201,8 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
                 }
 
                 // Attacking in Y direction
-                if (player.transform.x + 12.0f >= area.x && player.transform.x - 12.0f <= area.x + area.z
-                 && player.transform.y + 12.0f >= area.y && player.transform.y - 12.0f <= area.y + area.w) {
+                if (player.getTransform().x + 12.0f >= area.x && player.getTransform().x - 12.0f <= area.x + area.z
+                 && player.getTransform().y + 12.0f >= area.y && player.getTransform().y - 12.0f <= area.y + area.w) {
                     player.damagePlayer(Math.max(1, damage.toInt()), transform.x, transform.y)
                     player.inventory.updateHealthText()
                 }

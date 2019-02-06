@@ -85,12 +85,11 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
         bannerEntitySystem = scene.newSystem(bannerMaterial)
         bannerEntitySystem.newEntity(bannerEntity)
-                .attachTransformComponent()
                 .attachRenderComponent(bannerMaterial, bannerMesh)
                 .build()
 
-        val bannerTransform = bannerEntitySystem.findTransformComponent(bannerEntity.getId())
-        bannerTransform!!.sx = 1024.0f
+        val bannerTransform = bannerEntity.getTransform()
+        bannerTransform.sx = 1024.0f
         bannerTransform.sy = 256.0f
         bannerTransform.x = 1280.0f / 2.0f
         bannerTransform.y = 128.0f

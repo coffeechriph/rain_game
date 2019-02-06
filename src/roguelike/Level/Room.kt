@@ -92,40 +92,37 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
 
             val enemyAnimator = Animator()
             enemySystem.newEntity(kracGuy)
-                    .attachTransformComponent()
                     .attachRenderComponent(enemyMaterial, quadMesh)
                     .attachAnimatorComponent(enemyAnimator)
                     .build()
 
             enemyAttackSystem.newEntity(kracGuy.attackAreaVisual)
-                    .attachTransformComponent()
                     .attachRenderComponent(enemyAttackMaterial, quadMesh)
                     .build()
 
-            val attackRenderComponent = kracGuy.attackAreaVisual.getRenderComponents()!![0]
+            val attackRenderComponent = kracGuy.attackAreaVisual.getRenderComponents()[0]
             attackRenderComponent.visible = false
             attackRenderComponent.textureTileOffset.set(5,7)
 
             kracGuy.attackAreaVisualRenderComponent = attackRenderComponent
-            kracGuy.attackAreaVisualTransform = enemyAttackSystem.findTransformComponent(kracGuy.attackAreaVisual.getId())!!
+            kracGuy.attackAreaVisualTransform = kracGuy.attackAreaVisual.getTransform()
 
             val levelFactor = (player.currentLevel*1.5f).toInt()
             kracGuy.strength = (random.nextInt(levelFactor) + levelFactor*10 * kracGuy.strengthFactor).toInt()
             kracGuy.agility = (random.nextInt(levelFactor) + levelFactor*4 * kracGuy.agilityFactor).toInt()
             kracGuy.health = (100 + random.nextInt(levelFactor) * kracGuy.healthFactor).toInt()
-            kracGuy.getRenderComponents()!![0].visible = false
+            kracGuy.getRenderComponents()[0].visible = false
 
-            val et = enemySystem.findTransformComponent(kracGuy.getId())!!
+            val et = kracGuy.getTransform()
             kracGuy.healthBar.parentTransform = et
 
             healthBarSystem.newEntity(kracGuy.healthBar)
-                    .attachTransformComponent()
                     .attachRenderComponent(healthMaterial, quadMesh)
                     .build()
 
-            kracGuy.healthBar.getRenderComponents()!![0].visible = false
-            kracGuy.healthBar.transform.sx = 60.0f
-            kracGuy.healthBar.transform.sy = 7.0f
+            kracGuy.healthBar.getRenderComponents()[0].visible = false
+            kracGuy.healthBar.getTransform().sx = 60.0f
+            kracGuy.healthBar.getTransform().sy = 7.0f
 
             kracGuy.setPosition(Vector2i(p.x*64, p.y*64))
             enemies.add(kracGuy)
@@ -141,12 +138,11 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
 
             val container = Container(random.nextInt(2), random.nextInt(7) + 1)
             containerSystem.newEntity(container)
-                    .attachTransformComponent()
                     .attachRenderComponent(containerMaterial, quadMesh)
                     .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                     .build()
 
-            val emitter = container.getBurstParticleEmitters()!![0]
+            val emitter = container.getBurstParticleEmitters()[0]
             emitter.burstFinished = true
             emitter.singleBurst = true
             emitter.particlesPerBurst = 5
@@ -156,7 +152,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             emitter.enabled = false
 
             container.setPosition(Vector2i(tile.x*64 + 32, tile.y*64 + 32))
-            container.getRenderComponents()!![0].visible = false
+            container.getRenderComponents()[0].visible = false
             containers.add(container)
         }
     }
@@ -171,18 +167,17 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 val ty = y % height
                 val et = LightSource(x / width, y / height, Vector3f(0.9f, 0.55f, 0.1f))
                 torchSystem.newEntity(et)
-                        .attachTransformComponent()
                         .attachRenderComponent(torchMaterial, quadMesh)
                         .attachParticleEmitter(10, 16.0f, 1.0f, Vector2f(0.0f, -10.0f), DirectionType.LINEAR, 4.0f, 0.5f)
                         .build()
-                val etTransform = torchSystem.findTransformComponent(et.getId())
-                etTransform!!.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat(), 18.0f)
+                val etTransform = et.getTransform()
+                etTransform.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat(), 18.0f)
                 etTransform.sx = 48.0f
                 etTransform.sy = 48.0f
 
-                et.getRenderComponents()!![0].visible = false
+                et.getRenderComponents()[0].visible = false
 
-                val emitter = et.getParticleEmitters()!![0]
+                val emitter = et.getParticleEmitters()[0]
                 emitter.startSize = 5.0f
                 emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
                 emitter.endColor.set(1.0f, 0.3f, 0.0f, 0.5f)
@@ -203,15 +198,14 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 val ty = tile.y % height
                 val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f))
                 torchSystem.newEntity(et)
-                        .attachTransformComponent()
                         .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
                         .build()
-                val etTransform = torchSystem.findTransformComponent(et.getId())
-                etTransform!!.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
+                val etTransform = et.getTransform()
+                etTransform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
                 etTransform.sx = 64.0f
                 etTransform.sy = 64.0f
 
-                val emitter = et.getParticleEmitters()!![0]
+                val emitter = et.getParticleEmitters()[0]
                 emitter.startSize = 20.0f
                 emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
                 emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.0f)

@@ -151,7 +151,6 @@ class GameState(stateManager: StateManager): State(stateManager) {
         player.equipmentMesh = quadMesh
         playerSystem = scene.newSystem(mobMaterial)
         playerSystem.newEntity(player)
-                .attachTransformComponent()
                 .attachMoveComponent(0.0f, 0.0f)
                 .attachRenderComponent(mobMaterial, quadMesh)
                 .attachAnimatorComponent(playerAnimator)
@@ -177,7 +176,6 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         attackSystem = scene.newSystem(attackMaterial)
         attackSystem.newEntity(player.attack)
-                .attachTransformComponent()
                 .attachRenderComponent(attackMaterial, quadMesh)
                 .attachAnimatorComponent(Animator())
                 .build()
@@ -208,7 +206,6 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         player.setPosition(level.getFirstTilePos())
         player.getMoveComponent()!!.update(0.0f, 0.0f)
-        //changeMoveComponent(player.transform, 0.0f, 0.0f)
         level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
 
         inventory = Inventory(gui, player)
@@ -237,8 +234,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
             inventory.update(input)
         }
 
-        if (player.transform.x + player.cellX*level.width*64 >= level.exitPosition.x*64 - 32 && player.transform.x + player.cellX*level.width*64 <= level.exitPosition.x*64 + 32 &&
-                player.transform.y + player.cellY*level.height*64 >= level.exitPosition.y*64 - 32 && player.transform.y + player.cellY*level.height*64 <= level.exitPosition.y*64 + 32) {
+        if (player.getTransform().x + player.cellX*level.width*64 >= level.exitPosition.x*64 - 32 && player.getTransform().x + player.cellX*level.width*64 <= level.exitPosition.x*64 + 32 &&
+                player.getTransform().y + player.cellY*level.height*64 >= level.exitPosition.y*64 - 32 && player.getTransform().y + player.cellY*level.height*64 <= level.exitPosition.y*64 + 32) {
             player.currentLevel += 1
             level.build(System.currentTimeMillis(), healthBarSystem, healthMaterial)
             player.setPosition(level.getFirstTilePos())

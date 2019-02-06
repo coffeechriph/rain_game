@@ -16,7 +16,6 @@ class Attack(private val parentTransform: Transform) : Entity() {
     private var direction = Direction.DOWN
     private var activeTime = 0
     lateinit var attacker: Entity
-    lateinit var transform: Transform
 
     fun attack(direction: Direction) {
         active = true
@@ -32,7 +31,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        transform = system.findTransformComponent(getId())!!
+        val transform = getTransform()!!
         transform.setPosition(1200.0f,600.0f, 9.0f)
         transform.setScale(96.0f,96.0f)
 
@@ -51,6 +50,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
         val animator = getAnimatorComponent()!![0]
 
         if (active) {
+            val transform = getTransform()!!
             transform.z = parentTransform.z + 0.01f
 
             when(direction) {

@@ -56,7 +56,6 @@ class Item (val player: Player,
     var cellX = 0
     var cellY = 0
     var pickedUp = false
-    lateinit var transform: Transform
 
     private var time = 0.0f
     private var beginPickup = false
@@ -64,7 +63,7 @@ class Item (val player: Player,
 
     // TODO: Constant window size
     fun setPosition(system: EntitySystem<Item>, pos: Vector2i) {
-        val transform = system.findTransformComponent(getId())!!
+        val transform = getTransform()
         transform.x = pos.x.toFloat()
         transform.y = pos.y.toFloat()
         transform.z = 1.1f + transform.y * 0.001f
@@ -74,24 +73,24 @@ class Item (val player: Player,
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        transform = system.findTransformComponent(getId())!!
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
         if (getRenderComponents()!![0].visible) {
             time += 1.0f / 60.0f
+            val transform = getTransform()
             transform.y += Math.sin(time.toDouble()).toFloat() * 0.1f
 
             if (!beginPickup && !pickedUp) {
-                if (player.transform.x >= transform.x - 128 && player.transform.x <= transform.x + 128 &&
-                    player.transform.y >= transform.y - 128 && player.transform.y <= transform.y + 128) {
+                if (player.getTransform().x >= transform.x - 128 && player.getTransform().x <= transform.x + 128 &&
+                    player.getTransform().y >= transform.y - 128 && player.getTransform().y <= transform.y + 128) {
                     beginPickup = true
                     acc = 0.0000000000001
                 }
             }
             else {
-                val dx = (player.transform.x - transform.x) / 64.0
-                val dy = (player.transform.y - transform.y) / 64.0
+                val dx = (player.getTransform().x - transform.x) / 64.0
+                val dy = (player.getTransform().y - transform.y) / 64.0
                 val ln = Math.sqrt((dx*dx+dy*dy))
                 transform.x += ((dx / ln) * acc).toFloat()
                 transform.y += ((dy / ln) * acc).toFloat()
@@ -99,8 +98,8 @@ class Item (val player: Player,
                     acc += acc
                 }
 
-                if (player.transform.x >= transform.x - 8 && player.transform.x <= transform.x + 8 &&
-                    player.transform.y >= transform.y - 8 && player.transform.y <= transform.y + 8) {
+                if (player.getTransform().x >= transform.x - 8 && player.getTransform().x <= transform.x + 8 &&
+                    player.getTransform().y >= transform.y - 8 && player.getTransform().y <= transform.y + 8) {
                     pickedUp = true
                     beginPickup = false
                     getRenderComponents()!![0].visible = false
@@ -125,7 +124,6 @@ class Item (val player: Player,
         if (cellX != other.cellX) return false
         if (cellY != other.cellY) return false
         if (pickedUp != other.pickedUp) return false
-        if (transform != other.transform) return false
 
         return true
     }
@@ -140,7 +138,6 @@ class Item (val player: Player,
         result = 31 * result + cellX
         result = 31 * result + cellY
         result = 31 * result + pickedUp.hashCode()
-        result = 31 * result + transform.hashCode()
         return result
     }
 }

@@ -13,10 +13,9 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
     var cellX = 0
     var cellY = 0
 
-    lateinit var transform: Transform
-
     // TODO: Constant window size
     fun setPosition(pos: Vector2i) {
+        val transform = getTransform()!!
         transform.z = 2.0f + transform.y * 0.001f
         transform.setScale(64.0f, 64.0f)
         cellX = pos.x / 1280
@@ -26,15 +25,14 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        transform = system.findTransformComponent(getId())!!
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
         if (open) {
-            getRenderComponents()!![0].textureTileOffset = Vector2i(1,containerType+4)
+            getRenderComponents()[0].textureTileOffset = Vector2i(1,containerType+4)
         }
         else {
-            getRenderComponents()!![0].textureTileOffset = Vector2i(0,containerType+4)
+            getRenderComponents()[0].textureTileOffset = Vector2i(0,containerType+4)
         }
     }
 }
