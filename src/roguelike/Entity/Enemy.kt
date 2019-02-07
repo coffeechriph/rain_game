@@ -133,6 +133,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
                 attackAreaVisualTransform.sy = 0.0f
                 attackAreaVisualTransform.sx = attackArea.x
             }
+            attackAreaVisual.getRenderComponents()[0].addCustomUniformData(0, 1.0f)
         }
     }
 

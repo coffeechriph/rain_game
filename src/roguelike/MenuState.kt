@@ -87,6 +87,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         bannerEntitySystem.newEntity(bannerEntity)
                 .attachRenderComponent(bannerMaterial, bannerMesh)
                 .build()
+        bannerEntity.getRenderComponents()[0].addCustomUniformData(0, 1.0f)
 
         val bannerTransform = bannerEntity.getTransform()
         bannerTransform.sx = 1024.0f

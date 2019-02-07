@@ -5,11 +5,13 @@ layout(location = 1) in vec2 uv;
 
 layout(location = 0) out vec2 Uv;
 layout(location = 1) out vec4 Color;
+layout(location = 2) out float Intensity;
 
 layout(push_constant) uniform ModelMatrix {
     mat4 matrix;
     vec4 color;
     vec2 textureOffset;
+    float intensity;
 } modelMatrix;
 
 layout(set = 0, binding = 0) uniform SceneData {
@@ -25,4 +27,5 @@ void main() {
     Uv = vec2(uv.x * textureData.uvScale.x + textureData.uvScale.x * modelMatrix.textureOffset.x,
               uv.y * textureData.uvScale.y + textureData.uvScale.y * modelMatrix.textureOffset.y);
     Color = modelMatrix.color;
+    Intensity = modelMatrix.intensity;
 }

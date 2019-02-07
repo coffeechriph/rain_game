@@ -92,6 +92,13 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     }
 
     fun update(deltaTime: Float, input: Input) {
+        val lc = lightValues[(player.getTransform().x.toInt() / 64) + (player.getTransform().y.toInt()/64) * width]
+        player.getRenderComponents()[0].addCustomUniformData(0, lc.w)
+        player.bootsArmor.getRenderComponents()[0].addCustomUniformData(1, lc.w)
+        player.chestArmor.getRenderComponents()[0].addCustomUniformData(1, lc.w)
+        player.legsArmor.getRenderComponents()[0].addCustomUniformData(1, lc.w)
+        player.handsArmor.getRenderComponents()[0].addCustomUniformData(1, lc.w)
+
         if (delayLightUpdate == 0) {
             spreadLightOnTilemap(player.cellX, player.cellY)
             delayLightUpdate = 2
@@ -112,6 +119,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             var x = enemy.getTransform().x.toInt()/64
             var y = enemy.getTransform().y.toInt()/64
+
+            val elc = lightValues[x + y * width].w
+            enemy.getRenderComponents()[0].addCustomUniformData(0, elc)
+
             if (x >= width) {
                 x = width-1
             }
@@ -316,6 +327,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         for (container in activeContainers) {
+            val tx = (container.getTransform().x / 64.0f).toInt()
+            val ty = (container.getTransform().y / 64.0f).toInt()
+            val clc = lightValues[tx + ty * width].w
+            container.getRenderComponents()[0].addCustomUniformData(0, clc)
+
             if (!container.open && !container.looted) {
                 if (player.attack.getTransform().x + 32.0f >= container.getTransform().x - 32.0f && player.attack.getTransform().x - 32.0f <= container.getTransform().x + 32.0f &&
                     player.attack.getTransform().y + 32.0f >= container.getTransform().y - 32.0f && player.attack.getTransform().y - 32.0f <= container.getTransform().y + 32.0f) {
@@ -498,6 +514,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()[0]
         enemyTargetEntityRenderer.visible = false
         enemyTargetEntityRenderer.textureTileOffset.set(4,7)
+        enemyTargetEntityRenderer.addCustomUniformData(0, 1.0f)
     }
 
     fun switchCell(resourceFactory: ResourceFactory, healthBarSystem: EntitySystem<HealthBar>, cellX: Int, cellY: Int) {
