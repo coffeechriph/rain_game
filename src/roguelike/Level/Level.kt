@@ -686,9 +686,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             var y = ((t.y-32.0f) / 64.0f).toInt()
 
             if (x < 0) { x = 0 }
-            else if (x > width) { x = width - 1 }
+            else if (x >= width) { x = width - 1 }
             if (y < 0) { y = 0 }
-            else if (y > height) { y = height - 1 }
+            else if (y >= height) { y = height - 1 }
             lightValues[x + y * width] = Vector4f(light.color.x, light.color.y, light.color.z, 0.9f)
             spreadLight(x, y, lightValues[x + y * width])
         }
@@ -699,8 +699,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 val t = xp.getTransform()
                 val x = (t.x / 64.0f).toInt()
                 val y = (t.y / 64.0f).toInt()
-                lightValues[x + y * width] = Vector4f(0.0f, 1.0f, 0.0f, 1.0f)
-                spreadLight(x, y, lightValues[x + y * width])
+                spreadLight(x, y, Vector4f(0.0f, 1.0f, 0.0f, 1.0f))
             }
         }
 
@@ -795,12 +794,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             return
         }
 
-        val att = 0.22f
-        if (x in 0..(width - 1) && y >= 0 && y < height && lightValues[x + y * width].w < value.w) {
+        val att = 0.2f
+        if (x in 0..(width - 1) && y >= 0 && y < height) {
             val r = (lightValues[x + y * width].x + value.x) * 0.5f
             val g = (lightValues[x + y * width].y + value.y) * 0.5f
             val b = (lightValues[x + y * width].z + value.z) * 0.5f
-            val a = (lightValues[x + y * width].w + value.w) * 0.5f
+            val a = Math.max(lightValues[x + y * width].w, value.w)
             lightValues[x + y * width] = Vector4f(r,g,b,a)
         }
 
@@ -809,14 +808,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val color = Vector4f(value.x, value.y, value.z, value.w - att)
 
         if (x in 1..width) {
-            if (y in 0..(height - 1) && lightValues[(x-1) + y * width].w < color.w - att) {
+            if (y in 0..(height - 1) && lightValues[(x-1) + y * width].w < color.w) {
                 if (map[(mx-1) + my * mapWidth] == 0) {
                     spreadLight(x - 1, y, color)
                 }
             }
 
             if (y in 1..height) {
-                if (lightValues[(x-1) + (y-1) * width].w < color.w - att) {
+                if (lightValues[(x-1) + (y-1) * width].w < color.w) {
                     if (map[(mx-1) + (my-1) * mapWidth] == 0) {
                         spreadLight(x - 1, y - 1, color)
                     }
@@ -824,7 +823,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
 
             if (y in 0..(height-2)) {
-                if (lightValues[(x-1) + (y+1) * width].w < color.w - att) {
+                if (lightValues[(x-1) + (y+1) * width].w < color.w) {
                     if (map[(mx-1) + (my+1) * mapWidth] == 0) {
                         spreadLight(x - 1, y + 1, color)
                     }
@@ -833,19 +832,19 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         if (x in 0..(width-2)) {
-            if (y in 0..(height-1) && lightValues[(x+1) + y * width].w < color.w - att) {
+            if (y in 0..(height-1) && lightValues[(x+1) + y * width].w < color.w) {
                 if (map[(mx+1) + my * mapWidth] == 0) {
                     spreadLight(x + 1, y, color)
                 }
             }
 
-            if (y in 1..height && lightValues[(x+1) + (y-1) * width].w < color.w - att) {
+            if (y in 1..height && lightValues[(x+1) + (y-1) * width].w < color.w) {
                 if (map[(mx+1) + (my-1) * mapWidth] == 0) {
                     spreadLight(x + 1, y - 1, color)
                 }
             }
 
-            if (y in 0..(height-2) && lightValues[(x+1) + (y+1) * width].w < color.w - att) {
+            if (y in 0..(height-2) && lightValues[(x+1) + (y+1) * width].w < color.w) {
                 if (map[(mx+1) + (my+1) * mapWidth] == 0) {
                     spreadLight(x + 1, y + 1, color)
                 }
@@ -853,7 +852,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         if (x in 0..(width-1) && y in 1..height) {
-            if (lightValues[x + (y-1) * width].w < color.w - att) {
+            if (lightValues[x + (y-1) * width].w < color.w) {
                 if (map[mx + (my-1) * mapWidth] == 0) {
                     spreadLight(x, y - 1, color)
                 }
@@ -861,7 +860,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         if (x in 0..(width-1) && y in 0..(height-2)) {
-            if (lightValues[x + (y+1) * width].w < color.w - att) {
+            if (lightValues[x + (y+1) * width].w < color.w) {
                 if (map[mx + (my+1) * mapWidth] == 0) {
                     spreadLight(x, y + 1, color)
                 }
