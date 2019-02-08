@@ -192,24 +192,28 @@ class Player : Entity() {
             .attachRenderComponent(chestArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
+        chestArmor.getRenderComponents()[0].visible = false
 
         legsArmor = Entity()
         legsArmorSystem.newEntity(legsArmor)
             .attachRenderComponent(legsArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
+        legsArmor.getRenderComponents()[0].visible = false
 
         handsArmor = Entity()
         handsArmorSystem.newEntity(handsArmor)
             .attachRenderComponent(handsArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
+        handsArmor.getRenderComponents()[0].visible = false
 
         bootsArmor = Entity()
         bootsArmorSystem.newEntity(bootsArmor)
             .attachRenderComponent(bootsArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
+        bootsArmor.getRenderComponents()[0].visible = false
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {

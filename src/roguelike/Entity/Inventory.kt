@@ -1,5 +1,6 @@
 package roguelike.Entity
 
+import org.joml.Random
 import org.joml.Vector3f
 import rain.api.Input
 import rain.api.gui.*
@@ -186,14 +187,15 @@ class Inventory(val gui: Gui, val player: Player) {
         }
 
         if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
+            val randomEquipmentOffset = Random(System.currentTimeMillis()).nextInt(2)*4.0f
             if (items.size > 0) {
                 when (selectedItem.type) {
-                    ItemType.CHEST -> equippedChest = selectedItem
-                    ItemType.GLOVES -> equippedGloves = selectedItem
+                    ItemType.CHEST -> { equippedChest = selectedItem; player.chestArmor.getRenderComponents()[0].addCustomUniformData(0, randomEquipmentOffset)}
+                    ItemType.GLOVES -> { equippedGloves = selectedItem; player.handsArmor.getRenderComponents()[0].addCustomUniformData(0, randomEquipmentOffset) }
+                    ItemType.LEGS -> { equippedLegs = selectedItem; player.legsArmor.getRenderComponents()[0].addCustomUniformData(0, randomEquipmentOffset) }
+                    ItemType.BOOTS -> { equippedBoots = selectedItem; player.bootsArmor.getRenderComponents()[0].addCustomUniformData(0, randomEquipmentOffset) }
                     ItemType.MELEE -> equippedWeapon = selectedItem
                     ItemType.RANGED -> equippedWeapon = selectedItem
-                    ItemType.LEGS -> equippedLegs = selectedItem
-                    ItemType.BOOTS -> equippedBoots = selectedItem
                     ItemType.HEAD -> equippedHead = selectedItem
                     ItemType.POTION -> eatConsumable()
                 }
@@ -337,6 +339,11 @@ class Inventory(val gui: Gui, val player: Player) {
         levelText = statContainer.addText("Level: ${player.playerXpLevel}", 0.0f, 100.0f)
         xpText = statContainer.addText("Xp: ${player.xp}/${player.xpUntilNextLevel}", 0.0f, 120.0f)
         updateHealthText()
+
+        player.legsArmor.getRenderComponents()[0].visible = equippedLegs != ItemNone
+        player.handsArmor.getRenderComponents()[0].visible = equippedGloves != ItemNone
+        player.chestArmor.getRenderComponents()[0].visible = equippedChest != ItemNone
+        player.bootsArmor.getRenderComponents()[0].visible = equippedBoots != ItemNone
     }
 
     fun updateHealthText() {
