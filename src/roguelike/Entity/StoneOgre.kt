@@ -6,7 +6,7 @@ import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 
-class Krac(random: Random, player: Player): Enemy(random, player) {
+class StoneOgre(random: Random, player: Player): Enemy(random, player) {
     init {
         strengthFactor = 2.0f
         healthFactor = 1.5f

@@ -119,7 +119,7 @@ class Player : Entity() {
 
     fun targetEnemy(enemies: ArrayList<Enemy>, input: Input) {
         if (targetedEnemy != null) {
-            if (!targetedEnemy!!.getRenderComponents()!![0].visible) {
+            if (targetedEnemy!!.health <= 0) {
                 targetedEnemy = null
             }
         }
@@ -131,13 +131,19 @@ class Player : Entity() {
                 while (targetedEnemy == null) {
                     targetedEnemyIndex++
                     targetedEnemyIndex %= enemies.size
-                    for ((index, enemy) in enemies.withIndex()) {
+                    var index = 0
+                    for (enemy in enemies) {
                         if (index == targetedEnemyIndex) {
-                            if (enemy.getRenderComponents()!![0].visible) {
-                                targetedEnemy = enemy
+                            if (enemy.getRenderComponents()[0].visible) {
                                 break
                             }
                         }
+
+                        index++
+                    }
+
+                    if (index >= 0 && index < enemies.size) {
+                        targetedEnemy = enemies[index]
                     }
                 }
             }

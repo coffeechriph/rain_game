@@ -9,11 +9,28 @@ import rain.api.gfx.Material
 import rain.api.gfx.Mesh
 import roguelike.Entity.*
 
-enum class RoomType {
-    DIRT_CAVE,
-    ROCK_CAVE,
-    SNOW_CAVE,
+enum class EnemyType {
+    STONE_OGRE,
+    STONE_GOBLIN,
+    STONE_RAT
 }
+
+class RoomType {
+    val hasLights: Boolean
+    val hasEnemies: Boolean
+    val enemyTypes: Array<EnemyType>
+
+    constructor(hasLights: Boolean, hasEnemies: Boolean, enemyTypes: Array<EnemyType>) {
+        this.hasLights = hasLights
+        this.hasEnemies = hasEnemies
+        this.enemyTypes = enemyTypes
+    }
+}
+
+val DIRT_ROOM = RoomType(false, true, arrayOf(EnemyType.STONE_RAT))
+val COLD_DIRT_ROOM = RoomType(false, true, arrayOf(EnemyType.STONE_GOBLIN))
+val KRAC_BASE = RoomType(true, true, arrayOf(EnemyType.STONE_OGRE, EnemyType.STONE_GOBLIN))
+val RoomTypes = arrayOf(DIRT_ROOM, COLD_DIRT_ROOM, KRAC_BASE)
 
 class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomType) {
     var neighbourRooms = ArrayList<Room>()
@@ -66,66 +83,70 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
         return viableTiles.removeAt(rand.nextInt(viableTiles.size))
     }
 
-    internal fun generateEnemiesInRoom(random: Random,
-                                       enemySystem: EntitySystem<Enemy>,
-                                       enemyMaterial: Material,
-                                       quadMesh: Mesh,
-                                       enemyAttackSystem: EntitySystem<Entity>,
-                                       player: Player,
-                                       count: Int,
-                                       healthBarSystem: EntitySystem<HealthBar>,
-                                       healthMaterial: Material,
-                                       enemyAttackMaterial: Material) {
+    internal fun generateEnemiesInRoom(
+        random: Random,
+        enemySystem: EntitySystem<Enemy>,
+        enemyMaterial: Material,
+        quadMesh: Mesh,
+        enemyAttackSystem: EntitySystem<Entity>,
+        player: Player,
+        count: Int,
+        healthBarSystem: EntitySystem<HealthBar>,
+        healthMaterial: Material,
+        enemyAttackMaterial: Material,
+        enemyTypes: Array<EnemyType>
+    ) {
         for (i in 0 until count) {
             val p = findNoneEdgeTile(random)
             if (p == null) {
                 return
             }
 
-            val enemy = random.nextInt(2)
-
-            val kracGuy = if (enemy == 0) {
-                Krac(random, player)
-            } else {
-                MiniKrac(random, player)
+            val enemy = random.nextInt(enemyTypes.size)
+            val type = enemyTypes[enemy]
+            val enemyEntity = when (type) {
+                EnemyType.STONE_GOBLIN -> StoneGoblin(random, player)
+                EnemyType.STONE_OGRE -> StoneOgre(random,player)
+                EnemyType.STONE_RAT -> StoneRat(random,player)
+                else -> throw IllegalStateException("Not implemented!")
             }
 
             val enemyAnimator = Animator()
-            enemySystem.newEntity(kracGuy)
+            enemySystem.newEntity(enemyEntity)
                     .attachRenderComponent(enemyMaterial, quadMesh)
                     .attachAnimatorComponent(enemyAnimator)
                     .build()
 
-            enemyAttackSystem.newEntity(kracGuy.attackAreaVisual)
+            enemyAttackSystem.newEntity(enemyEntity.attackAreaVisual)
                     .attachRenderComponent(enemyAttackMaterial, quadMesh)
                     .build()
 
-            val attackRenderComponent = kracGuy.attackAreaVisual.getRenderComponents()[0]
+            val attackRenderComponent = enemyEntity.attackAreaVisual.getRenderComponents()[0]
             attackRenderComponent.visible = false
             attackRenderComponent.textureTileOffset.set(5,7)
 
-            kracGuy.attackAreaVisualRenderComponent = attackRenderComponent
-            kracGuy.attackAreaVisualTransform = kracGuy.attackAreaVisual.getTransform()
+            enemyEntity.attackAreaVisualRenderComponent = attackRenderComponent
+            enemyEntity.attackAreaVisualTransform = enemyEntity.attackAreaVisual.getTransform()
 
             val levelFactor = (player.currentLevel*1.5f).toInt()
-            kracGuy.strength = (random.nextInt(levelFactor) + levelFactor*10 * kracGuy.strengthFactor).toInt()
-            kracGuy.agility = (random.nextInt(levelFactor) + levelFactor*4 * kracGuy.agilityFactor).toInt()
-            kracGuy.health = (100 + random.nextInt(levelFactor) * kracGuy.healthFactor).toInt()
-            kracGuy.getRenderComponents()[0].visible = false
+            enemyEntity.strength = (random.nextInt(levelFactor) + levelFactor*10 * enemyEntity.strengthFactor).toInt()
+            enemyEntity.agility = (random.nextInt(levelFactor) + levelFactor*4 * enemyEntity.agilityFactor).toInt()
+            enemyEntity.health = (100 + random.nextInt(levelFactor) * enemyEntity.healthFactor).toInt()
+            enemyEntity.getRenderComponents()[0].visible = false
 
-            val et = kracGuy.getTransform()
-            kracGuy.healthBar.parentTransform = et
+            val et = enemyEntity.getTransform()
+            enemyEntity.healthBar.parentTransform = et
 
-            healthBarSystem.newEntity(kracGuy.healthBar)
+            healthBarSystem.newEntity(enemyEntity.healthBar)
                     .attachRenderComponent(healthMaterial, quadMesh)
                     .build()
 
-            kracGuy.healthBar.getRenderComponents()[0].visible = false
-            kracGuy.healthBar.getTransform().sx = 60.0f
-            kracGuy.healthBar.getTransform().sy = 7.0f
+            enemyEntity.healthBar.getRenderComponents()[0].visible = false
+            enemyEntity.healthBar.getTransform().sx = 60.0f
+            enemyEntity.healthBar.getTransform().sy = 7.0f
 
-            kracGuy.setPosition(Vector2i(p.x*64, p.y*64))
-            enemies.add(kracGuy)
+            enemyEntity.setPosition(Vector2i(p.x*64, p.y*64))
+            enemies.add(enemyEntity)
         }
     }
 

@@ -14,6 +14,7 @@ import rain.api.gfx.*
 import rain.api.scene.*
 import rain.vulkan.VertexAttribute
 import roguelike.Entity.*
+import java.lang.IllegalStateException
 import java.lang.Math
 import java.nio.ByteBuffer
 import kotlin.math.sign
@@ -79,8 +80,15 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     lateinit var quadMesh: Mesh
 
     fun lightIntensityAt(x: Float, y: Float): Float {
-        val tx = (x / 64.0f).toInt()
-        val ty = (y / 64.0f).toInt()
+        var tx = (x / 64.0f).toInt()
+        var ty = (y / 64.0f).toInt()
+        if (tx >= width) {
+            tx = width -1
+        }
+        if (ty >= height) {
+            ty = height -1
+        }
+
         return lightValues[tx + ty * width].w
     }
 
@@ -111,6 +119,19 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
         else {
             delayLightUpdate -= 1
+        }
+
+        // Remove dead enemies
+        val enemiesToRemove = ArrayList<Enemy>()
+        for (enemy in activeEnemies) {
+            if (enemy.health <= 0) {
+                enemiesToRemove.add(enemy)
+            }
+        }
+
+        for (e in enemiesToRemove) {
+            enemySystem.removeEntity(e)
+            activeEnemies.remove(e)
         }
 
         // Add navmesh blockers at the location of enemies
@@ -220,7 +241,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                         xpBall.setPosition(xpBallSystem, Vector2i(px, py))
                         xpBall.getTransform().sx = random.nextFloat() * 16.0f + 40.0f
                         xpBall.getTransform().sy = random.nextFloat() * 16.0f + 40.0f
-                        xpBall.getRenderComponents()[0].textureTileOffset = Vector2i(5,6)
+                        xpBall.getRenderComponents()[0].textureTileOffset = Vector2i(5,14)
+                        xpBall.getRenderComponents()[0].addCustomUniformData(0, 1.0f)
                     }
                 }
 
@@ -392,7 +414,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     item.getTransform().sx = 40.0f
                     item.getTransform().sy = 40.0f
                     item.getTransform().z = 2.0f
-                    item.getRenderComponents()[0].textureTileOffset = Vector2i(3,4+random.nextInt(3))
+                    item.getRenderComponents()[0].textureTileOffset = Vector2i(3,11+random.nextInt(4))
                 }
             }
         }
@@ -519,7 +541,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()[0]
         enemyTargetEntityRenderer.visible = false
-        enemyTargetEntityRenderer.textureTileOffset.set(4,7)
+        enemyTargetEntityRenderer.textureTileOffset.set(4,15)
         enemyTargetEntityRenderer.addCustomUniformData(0, 1.0f)
     }
 
@@ -588,7 +610,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (light in room.campfire) {
                 if (light.cellX == cellX && light.cellY == cellY) {
-                    val emitter = light.getParticleEmitters()!![0]
+                    val emitter = light.getParticleEmitters()[0]
                     emitter.enabled = true
                     activeLightSources.add(light)
                 }
@@ -624,7 +646,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 val cl = collisionSystem.findColliderComponent(e.getId())!!
                 cl.setPosition(cx + 32.0f, cy + 32.0f)
                 cl.setFriction(0.15f)
-                tr!!.sx = 64.0f
+                tr.sx = 64.0f
                 tr.sy = 64.0f
                 tr.z = 13.0f
             }
@@ -914,7 +936,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
 
-        val room = Room(firstRoomTiles, Vector4i(0,0,width,height),RoomType.DIRT_CAVE)
+        val room = Room(firstRoomTiles, Vector4i(0,0,width,height), DIRT_ROOM)
         rooms.add(room)
 
         mapBackIndices = Array(mapWidth*mapHeight){ TileGfxNone }
@@ -928,7 +950,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         startPosition = Vector2i(width/2, 3)
         exitPosition = Vector2i(width/2, height/2)
 
-        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, endRoom.type.ordinal)
+        val exitType = when (endRoom.type) {
+            DIRT_ROOM -> 0
+            COLD_DIRT_ROOM -> 2
+            KRAC_BASE -> 1
+            else -> throw IllegalStateException("Room type " + endRoom.type + " is not supported!")
+        }
+
+        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, exitType)
         room.generateLightsInRoom(random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
 
         // Put campfire next to exit on first level
@@ -973,12 +1002,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     fun build(seed: Long, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
         random = Random(seed)
-        generate(7)
+        generate(random.nextInt(5) + 1)
         addWallBlockersAtEdges()
         buildRooms()
 
-        mapBackIndices = Array(mapWidth*mapHeight){ TileGfxNone }
-        mapFrontIndices = Array(mapWidth*mapHeight){ TileGfxNone }
+        mapBackIndices = Array(mapWidth * mapHeight) { TileGfxNone }
+        mapFrontIndices = Array(mapWidth * mapHeight) { TileGfxNone }
         populateTilemap()
 
         // Set position of start and exit
@@ -988,39 +1017,61 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         startPosition = startRoom.findNoneEdgeTile(random)!!
         exitPosition = endRoom.findNoneEdgeTile(random)!!
 
-        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, endRoom.type.ordinal)
+        val exitType = when (endRoom.type) {
+            DIRT_ROOM -> 0
+            COLD_DIRT_ROOM -> 2
+            KRAC_BASE -> 1
+            else -> throw IllegalStateException("Room type " + endRoom.type + " is not supported!")
+        }
+
+        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, exitType)
 
         generateRooms(healthBarSystem, healthBarMaterial)
 
-        val pixelData = BufferUtils.createByteBuffer(mapWidth*mapHeight*3)
+        val pixelData = BufferUtils.createByteBuffer(mapWidth * mapHeight * 3)
         for (room in rooms) {
-            val R = random.nextInt(127).toByte()
-            val G = random.nextInt(127).toByte()
-            val B = random.nextInt(127).toByte()
+            var R = 127.toByte()
+            var G = 127.toByte()
+            var B = 127.toByte()
+
+            if (room.type == KRAC_BASE) {
+                R = 0
+                G = 127
+                B = 0
+            } else if (room.type == DIRT_ROOM) {
+                R = 127
+                G = 64
+                B = 0
+            } else if (room.type == COLD_DIRT_ROOM) {
+                R = 127
+                G = 96
+                B = 96
+            }
+
             for (tile in room.tiles) {
-                pixelData.put((tile.x + tile.y*mapWidth)*3, 127)
-                pixelData.put((tile.x + tile.y*mapWidth)*3+1, 127)
-                pixelData.put((tile.x + tile.y*mapWidth)*3+2, 127)
+                pixelData.put((tile.x + tile.y * mapWidth) * 3, R)
+                pixelData.put((tile.x + tile.y * mapWidth) * 3 + 1, G)
+                pixelData.put((tile.x + tile.y * mapWidth) * 3 + 2, B)
             }
 
             for (enemy in room.enemies) {
-                val x = ((enemy.getTransform().x/64.0f)+(enemy.cellX*width)).toInt()
-                val y = ((enemy.getTransform().y/64.0f)+(enemy.cellY*height)).toInt()
+                val x = ((enemy.getTransform().x / 64.0f) + (enemy.cellX * width)).toInt()
+                val y = ((enemy.getTransform().y / 64.0f) + (enemy.cellY * height)).toInt()
 
-                pixelData.put((x + y*mapWidth)*3, 127)
-                pixelData.put((x + y*mapWidth)*3+1, 0)
-                pixelData.put((x + y*mapWidth)*3+2, 0)
+                pixelData.put((x + y * mapWidth) * 3, 127)
+                pixelData.put((x + y * mapWidth) * 3 + 1, 0)
+                pixelData.put((x + y * mapWidth) * 3 + 2, 0)
             }
 
             for (container in room.containers) {
-                val x = ((container.getTransform().x/64.0f)+(container.cellX*width)).toInt()
-                val y = ((container.getTransform().y/64.0f)+(container.cellY*height)).toInt()
-                pixelData.put((x + y*mapWidth)*3, 127)
-                pixelData.put((x + y*mapWidth)*3+1, 100)
-                pixelData.put((x + y*mapWidth)*3+2, 0)
+                val x = ((container.getTransform().x / 64.0f) + (container.cellX * width)).toInt()
+                val y = ((container.getTransform().y / 64.0f) + (container.cellY * height)).toInt()
+                pixelData.put((x + y * mapWidth) * 3, 127)
+                pixelData.put((x + y * mapWidth) * 3 + 1, 100)
+                pixelData.put((x + y * mapWidth) * 3 + 2, 0)
             }
         }
-        STBImageWrite.stbi_write_png("level.png", mapWidth, mapHeight, 3, pixelData, mapWidth*3)
+        STBImageWrite.stbi_write_png("levels/level.png", mapWidth, mapHeight, 3, pixelData, mapWidth * 3)
     }
 
     private fun addWallBlockersAtEdges() {
@@ -1063,7 +1114,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     private fun populateTilemap() {
         for (room in rooms) {
-            val tileY = room.type.ordinal
+            val tileY = when (room.type) {
+                DIRT_ROOM -> 0
+                COLD_DIRT_ROOM -> 2
+                KRAC_BASE -> 1
+                else -> throw IllegalStateException("Not implemented!")
+            }
 
             for (tile in room.tiles) {
                 val index = tile.x + tile.y * mapWidth
@@ -1091,7 +1147,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     if (map[tile.x + (tile.y+1) * mapWidth] == 1 &&
                         map[tile.x + (tile.y+2) * mapWidth] == 1 &&
                         map[tile.x + (tile.y+3) * mapWidth] == 1) {
-                        mapFrontIndices[tile.x + (tile.y+1) * mapWidth] = TileGfx(0, 3)
+                        mapFrontIndices[tile.x + (tile.y+1) * mapWidth] = TileGfx(0, 11)
                         map[tile.x + (tile.y + 1) * mapWidth] = 1
                     }
                 }
@@ -1231,8 +1287,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             // Floor tile found - flood fill the room
             if (mapCopy[i] == 0) {
                 val area = Vector4i(Int.MAX_VALUE, Int.MAX_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
-                val tiles = floodSearchRoom(x,y,area,mapCopy,ArrayList())
-                val room = Room(tiles, area, RoomType.values()[random.nextInt(3)])
+                val tiles = floodSearchRoom(x,y,area,mapCopy,ArrayList(), 0)
+                val room = Room(tiles, area, RoomTypes[random.nextInt(RoomTypes.size)])
                 rooms.add(room)
             }
 
@@ -1452,7 +1508,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
     }
 
-    private fun floodSearchRoom(x: Int, y: Int, area: Vector4i, mapCopy: IntArray, tiles: MutableList<Vector2i>): MutableList<Vector2i> {
+    private fun floodSearchRoom(x: Int, y: Int, area: Vector4i, mapCopy: IntArray, tiles: MutableList<Vector2i>, depth: Int): MutableList<Vector2i> {
         if (x < area.x) {
             area.x = x
         }
@@ -1468,77 +1524,55 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         tiles.add(Vector2i(x, y))
         mapCopy[x + y*mapWidth] = 1
+        if (depth > 20) {
+            return tiles
+        }
 
-        val maxTiles = 5
         if (x > 0) {
             if (mapCopy[(x-1) + y*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x-1, y, area, mapCopy, ArrayList()))
-                if (tiles.size >= maxTiles) {
-                    return tiles
-                }
+                tiles.addAll(floodSearchRoom(x-1, y, area, mapCopy, ArrayList(), depth+1))
             }
 
             if (y > 0) {
                 if (mapCopy[(x-1) + (y-1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x-1, y-1, area, mapCopy, ArrayList()))
-                    if (tiles.size >= maxTiles) {
-                        return tiles
-                    }
+                    tiles.addAll(floodSearchRoom(x-1, y-1, area, mapCopy, ArrayList(), depth+1))
                 }
             }
 
             if (y < mapHeight - 1) {
                 if (mapCopy[(x-1) + (y+1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x-1, y+1, area, mapCopy, ArrayList()))
-                    if (tiles.size >= maxTiles) {
-                        return tiles
-                    }
+                    tiles.addAll(floodSearchRoom(x-1, y+1, area, mapCopy, ArrayList(), depth+1))
                 }
             }
         }
 
         if (y > 0) {
             if (mapCopy[x + (y-1)*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x, y-1, area, mapCopy, ArrayList()))
-                if (tiles.size >= maxTiles) {
-                    return tiles
-                }
+                tiles.addAll(floodSearchRoom(x, y-1, area, mapCopy, ArrayList(), depth+1))
             }
         }
 
         if (x < mapWidth - 1) {
             if (mapCopy[(x+1) + y*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x+1, y, area, mapCopy, ArrayList()))
-                if (tiles.size >= maxTiles) {
-                    return tiles
-                }
+                tiles.addAll(floodSearchRoom(x+1, y, area, mapCopy, ArrayList(), depth+1))
             }
 
             if (y > 0) {
                 if (mapCopy[(x+1) + (y-1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x+1, y-1, area, mapCopy, ArrayList()))
-                    if (tiles.size >= maxTiles) {
-                        return tiles
-                    }
+                    tiles.addAll(floodSearchRoom(x+1, y-1, area, mapCopy, ArrayList(), depth+1))
                 }
             }
 
             if (y < mapHeight - 1) {
                 if (mapCopy[(x+1) + (y+1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x+1, y+1, area, mapCopy, ArrayList()))
-                    if (tiles.size >= maxTiles) {
-                        return tiles
-                    }
+                    tiles.addAll(floodSearchRoom(x+1, y+1, area, mapCopy, ArrayList(), depth+1))
                 }
             }
         }
 
         if (y < mapHeight - 1) {
             if (mapCopy[x + (y+1)*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x, y+1, area, mapCopy, ArrayList()))
-                if (tiles.size >= maxTiles) {
-                    return tiles
-                }
+                tiles.addAll(floodSearchRoom(x, y+1, area, mapCopy, ArrayList(), depth+1))
             }
         }
 
@@ -1547,12 +1581,45 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     private fun generateRooms(healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
         for (room in rooms) {
-            val lightCount = random.nextInt(5) + 3
-            val thisRoomEnemyCount = (room.tiles.size/64)
-            room.generateEnemiesInRoom(random, enemySystem, enemyMaterial, quadMesh, enemyAttackSystem, player, thisRoomEnemyCount, healthBarSystem, healthBarMaterial, enemyAttackMaterial)
+            // Only generate enemies in the correct rooms
+            if (room.type.hasEnemies) {
+                val enemyDensity = room.tiles.size / 64
+                val numEnemies = random.nextInt(enemyDensity) + 1
+
+                room.generateEnemiesInRoom(
+                    random,
+                    enemySystem,
+                    enemyMaterial,
+                    quadMesh,
+                    enemyAttackSystem,
+                    player,
+                    numEnemies,
+                    healthBarSystem,
+                    healthBarMaterial,
+                    enemyAttackMaterial,
+                    room.type.enemyTypes
+                )
+            }
+
             val thisRoomContainerCount = room.tiles.size/72
             room.generateContainersInRoom(random, thisRoomContainerCount, containerSystem, itemMaterial, quadMesh)
-            room.generateLightsInRoom(random, map, mapWidth, width, height, lightCount, random.nextInt(10) == 1, torchSystem, itemMaterial, quadMesh)
+
+            if (room.type.hasLights) {
+                val lightDensity = room.tiles.size / 48
+                val numLights = random.nextInt(lightDensity) + 1
+                room.generateLightsInRoom(
+                    random,
+                    map,
+                    mapWidth,
+                    width,
+                    height,
+                    numLights,
+                    random.nextInt(10) == 1,
+                    torchSystem,
+                    itemMaterial,
+                    quadMesh
+                )
+            }
         }
     }
 }

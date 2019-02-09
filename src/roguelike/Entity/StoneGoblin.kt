@@ -6,7 +6,7 @@ import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 
-class MiniKrac(random: Random, player: Player): Enemy(random, player) {
+class StoneGoblin(random: Random, player: Player): Enemy(random, player) {
     init {
         strengthFactor = 0.70f
         healthFactor = 0.65f
