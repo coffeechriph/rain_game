@@ -139,7 +139,10 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
 
     protected fun handleDamage(transform: Transform) {
         if (wasAttacked) {
-            transform.y = transform.y + sin(attackAnimation * 100.0f) * 2.0f
+            val shake = sin(attackAnimation * 100.0f) * 2.0f
+            transform.y = transform.y + shake
+            val cl = Math.max(Math.min(1.0f,shake),0.0f)
+            getRenderComponents()[0].color.set(cl)
             attackAnimation += 0.075f
 
             if (attackAnimation >= 1.0f) {
