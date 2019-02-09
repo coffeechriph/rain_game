@@ -31,60 +31,54 @@ class Attack(private val parentTransform: Transform) : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        val transform = getTransform()!!
+        val transform = getTransform()
         transform.setPosition(1200.0f,600.0f, 9.0f)
-        transform.setScale(96.0f,96.0f)
-
-        val animator = getAnimatorComponent()!![0]
-        animator.addAnimation("down", 0, 0, 0, 0.0f)
-        animator.addAnimation("right", 1, 1, 0, 0.0f)
-        animator.addAnimation("up", 2, 2, 0, 0.0f)
-        animator.addAnimation("left", 3, 3, 0, 0.0f)
-
-        // TODO: A problem here was that I had to add a idle animation for the LEFT
-        // animation to actually trigger due to how it works in the Sprite
-        animator.addAnimation("idle", 0, 0, 0, 0.0f)
+        transform.setScale(72.0f,72.0f)
+        getRenderComponents()[0].addCustomUniformData(0, 1.0f)
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
-        val animator = getAnimatorComponent()!![0]
+        val animator = getAnimatorComponent()[0]
 
         if (active) {
-            val transform = getTransform()!!
-            transform.z = parentTransform.z + 0.01f
+            if (!getRenderComponents()[0].visible) {
+                val transform = getTransform()
+                transform.z = parentTransform.z + 0.01f
 
-            when(direction) {
-                Direction.LEFT -> {
-                    transform.x = parentTransform.x - 32
-                    transform.y = parentTransform.y
-                    animator.setAnimation("left")
-                }
-                Direction.RIGHT -> {
-                    transform.x = parentTransform.x + 32
-                    transform.y = parentTransform.y
-                    animator.setAnimation("right")
-                }
-                Direction.UP -> {
-                    transform.x = parentTransform.x
-                    transform.y = parentTransform.y - 32
-                    animator.setAnimation("up")
-                }
-                Direction.DOWN -> {
-                    transform.x = parentTransform.x
-                    transform.y = parentTransform.y + 32
-                    animator.setAnimation("down")
+                when (direction) {
+                    Direction.LEFT -> {
+                        transform.x = parentTransform.x - 32
+                        transform.y = parentTransform.y
+                        transform.rot = Math.PI.toFloat() * 0.75f
+                        animator.setAnimation("attack", true)
+                    }
+                    Direction.RIGHT -> {
+                        transform.x = parentTransform.x + 32
+                        transform.y = parentTransform.y
+                        transform.rot = Math.PI.toFloat() * 1.75f
+                        animator.setAnimation("attack", true)
+                    }
+                    Direction.UP -> {
+                        transform.x = parentTransform.x
+                        transform.y = parentTransform.y - 32
+                        transform.rot = Math.PI.toFloat()
+                        animator.setAnimation("attack", true)
+                    }
+                    Direction.DOWN -> {
+                        transform.x = parentTransform.x
+                        transform.y = parentTransform.y + 32
+                        transform.rot = 0.0f
+                        animator.setAnimation("attack", true)
+                    }
                 }
             }
 
-            getRenderComponents()!![0].visible = true
-            activeTime++
-            if (activeTime > 10) {
+            getRenderComponents()[0].visible = true
+            if (animator.animationComplete) {
                 active = false
-                activeTime = 0
+                animator.setAnimation("idle")
+                getRenderComponents()[0].visible = false
             }
-        }
-        else {
-            getRenderComponents()!![0].visible = false
         }
     }
 }

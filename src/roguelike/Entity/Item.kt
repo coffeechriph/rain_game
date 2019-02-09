@@ -62,7 +62,7 @@ class Item (val player: Player,
     private var acc = 0.0000000000001
 
     // TODO: Constant window size
-    fun setPosition(system: EntitySystem<Item>, pos: Vector2i) {
+    fun setPosition(pos: Vector2i) {
         val transform = getTransform()
         transform.x = pos.x.toFloat()
         transform.y = pos.y.toFloat()
@@ -76,10 +76,11 @@ class Item (val player: Player,
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
-        if (getRenderComponents()!![0].visible) {
+        if (getRenderComponents()[0].visible) {
             time += 1.0f / 60.0f
             val transform = getTransform()
             transform.y += Math.sin(time.toDouble()).toFloat() * 0.1f
+            getRenderComponents()[0].addCustomUniformData(0, player.level.lightIntensityAt(transform.x, transform.y))
 
             if (!beginPickup && !pickedUp) {
                 if (player.getTransform().x >= transform.x - 128 && player.getTransform().x <= transform.x + 128 &&
@@ -102,7 +103,7 @@ class Item (val player: Player,
                     player.getTransform().y >= transform.y - 8 && player.getTransform().y <= transform.y + 8) {
                     pickedUp = true
                     beginPickup = false
-                    getRenderComponents()!![0].visible = false
+                    getRenderComponents()[0].visible = false
                     player.inventory.addItem(this)
                 }
             }

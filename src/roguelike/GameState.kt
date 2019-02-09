@@ -180,6 +180,10 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .attachAnimatorComponent(Animator())
                 .build()
 
+        player.attack.getAnimatorComponent()[0].addAnimation("idle", 0, 0, 0, 0.0f)
+        player.attack.getAnimatorComponent()[0].addAnimation("attack", 0, 4, 0, 40.0f)
+        player.attack.getRenderComponents()[0].visible = false
+
         val healthTexture = resourceFactory.buildTexture2d()
                 .withName("healthTexture")
                 .fromImageFile("./data/textures/health.png")
@@ -206,7 +210,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         player.setPosition(level.getFirstTilePos())
         player.getMoveComponent()!!.update(0.0f, 0.0f)
-        level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
+        level.switchCell(resourceFactory, player.cellX, player.cellY)
 
         inventory = Inventory(gui, player)
         player.inventory = inventory
@@ -224,7 +228,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         }
 
         if (player.playerMovedCell) {
-            level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
+            level.switchCell(resourceFactory, player.cellX, player.cellY)
             player.playerMovedCell = false
         }
 
@@ -239,7 +243,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
             player.currentLevel += 1
             level.build(System.currentTimeMillis(), healthBarSystem, healthMaterial)
             player.setPosition(level.getFirstTilePos())
-            level.switchCell(resourceFactory, healthBarSystem, player.cellX, player.cellY)
+            level.switchCell(resourceFactory, player.cellX, player.cellY)
 
             container.removeText(currentLevelText)
             currentLevelText = container.addText("Current Level: ${player.currentLevel}", 0.0f, 0.0f, background = true)
