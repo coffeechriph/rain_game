@@ -1077,31 +1077,15 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private fun addWallBlockersAtEdges() {
         var x = 0
         var y = 0
-        for (i in 0 until mapWidth*mapHeight) {
-            if (x % width == 0) {
-                if (x < mapWidth - 1) {
-                    if (map[x + y*mapWidth] == 0) {
-                        map[(x + 1) + y * mapWidth] = 0
-                    }
-                }
-                if (x > 0) {
-                    if (map[x + y*mapWidth] == 0) {
-                        map[(x - 1) + y * mapWidth] = 0
-                    }
-                }
+        for (i in 0 until map.size) {
+            if (x > 0 && x < mapWidth-1 && (x%width) == 0 && map[x + y*mapWidth] == 1) {
+                map[(x-1)+y*mapWidth] = 1
+                map[(x+1)+y*mapWidth] = 1
             }
 
-            if (y % height == 0) {
-                if (y < mapHeight - 1) {
-                    if (map[x + y*mapWidth] == 0) {
-                        map[x + (y + 1) * mapWidth] = 0
-                    }
-                }
-                if (y > 0) {
-                    if (map[x + y*mapWidth] == 0) {
-                        map[x + (y - 1) * mapWidth] = 0
-                    }
-                }
+            if (y > 0 && y < mapHeight-1 && (y%height) == 0 && map[x + y*mapWidth] == 1) {
+                map[x+(y-1)*mapWidth] = 1
+                map[x+(y+1)*mapWidth] = 1
             }
 
             x += 1
