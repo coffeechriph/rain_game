@@ -20,18 +20,20 @@ enum class ItemType {
     POTION
 }
 
+class ItemDesc(val type: ItemType, val textureOffset: Vector2i)
+
 val ITEM_COMBINATIONS = arrayOf(
-    Pair(ItemType.MELEE, arrayOf(   "Iron Sword", "Steel Sword", "Wood Sword", "Bronze Sword", "Diamond Sword", "Mithril Sword",
+    Pair(ItemDesc(ItemType.MELEE, Vector2i(0, 1)), arrayOf(   "Iron Sword", "Steel Sword", "Wood Sword", "Bronze Sword", "Diamond Sword", "Mithril Sword",
                                     "Iron Dagger", "Steel Dagger", "Wood Dagger", "Bronze Dagger", "Diamond Dagger", "Mithril Dagger",
                                     "Iron Spear", "Steel Spear", "Wood Spear", "Bronze Spear", "Diamond Spear", "Mithril Spear",
                                     "Iron Mace", "Steel Mace", "Wood Mace", "Bronze Mace", "Diamond Mace", "Mithril Mace")),
-    Pair(ItemType.RANGED, arrayOf(  "Bow", "Long Bow", "Crossbow")),
-    Pair(ItemType.HEAD, arrayOf(    "Helmet", "Hood", "Mask", "Cap")),
-    Pair(ItemType.CHEST, arrayOf(   "Chest Armor", "Bronze Breastplate", "Bone Cage", "Iron Breastplate", "Mithril Breastplate")),
-    Pair(ItemType.LEGS, arrayOf(    "Leather Leggings", "Cloth Leggings", "Old Underwear", "Simple Leggings", "Leather Pants", "Cloth Pants")),
-    Pair(ItemType.GLOVES, arrayOf(  "Leather Gloves", "Cloth Gloves", "Iron Gloves", "Bronze Gloves", "Mithril Gloves")),
-    Pair(ItemType.BOOTS, arrayOf(   "Leather Boots", "Cloth Boots", "Sandals", "Iron Boots", "Mithril Boots", "Bronze Boots")),
-    Pair(ItemType.POTION, arrayOf(  "Minor Health Potion", "Lesser Health Potion", "Health Potion", "Great Health Potion"))
+    Pair(ItemDesc(ItemType.RANGED, Vector2i(0, 4)), arrayOf(  "Bow", "Long Bow", "Crossbow")),
+    Pair(ItemDesc(ItemType.HEAD, Vector2i(0, 1)), arrayOf(    "Helmet", "Hood", "Mask", "Cap")),
+    Pair(ItemDesc(ItemType.CHEST, Vector2i(0, 1)), arrayOf(   "Chest Armor", "Bronze Breastplate", "Bone Cage", "Iron Breastplate", "Mithril Breastplate")),
+    Pair(ItemDesc(ItemType.LEGS, Vector2i(0, 1)), arrayOf(    "Leather Leggings", "Cloth Leggings", "Old Underwear", "Simple Leggings", "Leather Pants", "Cloth Pants")),
+    Pair(ItemDesc(ItemType.GLOVES, Vector2i(0, 1)), arrayOf(  "Leather Gloves", "Cloth Gloves", "Iron Gloves", "Bronze Gloves", "Mithril Gloves")),
+    Pair(ItemDesc(ItemType.BOOTS, Vector2i(0, 1)), arrayOf(   "Leather Boots", "Cloth Boots", "Sandals", "Iron Boots", "Mithril Boots", "Bronze Boots")),
+    Pair(ItemDesc(ItemType.POTION, Vector2i(0, 0)), arrayOf(  "Minor Health Potion", "Lesser Health Potion", "Health Potion", "Great Health Potion"))
 )
 
 val ITEM_QUALITIES = arrayOf(

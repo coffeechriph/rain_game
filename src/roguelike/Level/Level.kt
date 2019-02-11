@@ -392,13 +392,13 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
                     val finalQuality = (qualityIndex*qualityIndex + qualityIndex).toInt()
 
-                    val item = if (combination.first != ItemType.POTION) {
-                        Item(player, combination.first, "$qualityName $name", random.nextInt(finalQuality)+1, random.nextInt(finalQuality)+1,
+                    val item = if (combination.first.type != ItemType.POTION) {
+                        Item(player, combination.first.type, "$qualityName $name", random.nextInt(finalQuality)+1, random.nextInt(finalQuality)+1,
                                 random.nextInt(finalQuality)+1,random.nextInt(finalQuality)+1, 0, false, 0.0f)
                     }
                     else {
                         val health = (combination.second.size+1)*10
-                        Item(player, combination.first, "$qualityName $name", 0, 0, 0, 0, health, true, 0.0f)
+                        Item(player, combination.first.type, "$qualityName $name", 0, 0, 0, 0, health, true, 0.0f)
                     }
 
                     levelItemSystem.newEntity(item)
@@ -414,7 +414,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     item.getTransform().sx = 40.0f
                     item.getTransform().sy = 40.0f
                     item.getTransform().z = 2.0f
-                    item.getRenderComponents()[0].textureTileOffset = Vector2i(3,11+random.nextInt(4))
+                    item.getRenderComponents()[0].textureTileOffset = Vector2i(3+combination.first.textureOffset.x,11+combination.first.textureOffset.y)
                 }
             }
         }
@@ -424,7 +424,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         return Vector2i(startPosition.x * 64, startPosition.y * 64)
     }
 
-    fun create(resourceFactory: ResourceFactory, scene: Scene, healthBarSystem: EntitySystem<HealthBar>, mapWidth: Int, mapHeight: Int, width: Int, height: Int) {
+    fun create(resourceFactory: ResourceFactory, scene: Scene, mapWidth: Int, mapHeight: Int, width: Int, height: Int) {
         firstBuild = true
         maxCellX = mapWidth / width
         maxCellY = mapHeight / height

@@ -173,8 +173,8 @@ class Player : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        renderComponent = getRenderComponents()!![0]
-        animator = getAnimatorComponent()!![0]
+        renderComponent = getRenderComponents()[0]
+        animator = getAnimatorComponent()[0]
         getTransform().setScale(64.0f,64.0f)
 
         animator.addAnimation("idle_down", 0, 0, 0, 0.0f)
@@ -329,7 +329,7 @@ class Player : Entity() {
             stopMovement = 0.0f
         }
 
-        val speed = 100.0f * (1.0f / 60.0f)
+        val speed = 150.0f * (1.0f / 60.0f)
         if (!dodgeMovement) {
             if (inputTimestamps.size <= 0) {
                 if (damageShake <= 0.0f) {

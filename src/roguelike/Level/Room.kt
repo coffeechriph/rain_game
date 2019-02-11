@@ -108,7 +108,6 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 EnemyType.STONE_GOBLIN -> StoneGoblin(random, player)
                 EnemyType.STONE_OGRE -> StoneOgre(random,player)
                 EnemyType.STONE_RAT -> StoneRat(random,player)
-                else -> throw IllegalStateException("Not implemented!")
             }
 
             val enemyAnimator = Animator()
@@ -123,7 +122,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
 
             val attackRenderComponent = enemyEntity.attackAreaVisual.getRenderComponents()[0]
             attackRenderComponent.visible = false
-            attackRenderComponent.textureTileOffset.set(5,7)
+            attackRenderComponent.textureTileOffset.set(5,15)
 
             enemyEntity.attackAreaVisualRenderComponent = attackRenderComponent
             enemyEntity.attackAreaVisualTransform = enemyEntity.attackAreaVisual.getTransform()
