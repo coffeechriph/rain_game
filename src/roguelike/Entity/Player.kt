@@ -257,15 +257,18 @@ class Player : Entity() {
 
         if (damageShake > 0.0f) {
             val shake = Math.sin(damageShake.toDouble() * Math.PI * 32).toFloat() * 3
-            
-            if (!level.collides(transform.x + damagePushVelX, transform.y, 64.0f, 64.0f)) {
-                getMoveComponent()!!.update(damagePushVelX, 0.0f)
-                isStill = false
-            }
 
-            if (!level.collides(transform.x, transform.y + damagePushVelY, 64.0f, 64.0f)) {
-                getMoveComponent()!!.update(0.0f, damagePushVelY)
-                isStill = false
+            if (damagePushVelX < 0.0f || damagePushVelX > 0.0f) {
+                if (!level.collides(transform.x + damagePushVelX, transform.y, 64.0f, 64.0f)) {
+                    getMoveComponent()!!.update(damagePushVelX, 0.0f)
+                    isStill = false
+                }
+            }
+            else if (damagePushVelY < 0.0f || damagePushVelY > 0.0f) {
+                if (!level.collides(transform.x, transform.y + damagePushVelY, 64.0f, 64.0f)) {
+                    getMoveComponent()!!.update(0.0f, damagePushVelY)
+                    isStill = false
+                }
             }
 
             scene.activeCamera.view.translate(0.0f, shake * 2, 0.0f)
@@ -365,11 +368,11 @@ class Player : Entity() {
             }
 
             val transform = getTransform()
-            if (level.collides(transform.x + velX, transform.y, 32.0f, 32.0f)) {
+            if (level.collides(transform.x + velX, transform.y, 64.0f, 64.0f)) {
                 velX = 0.0f
             }
 
-            if (level.collides(transform.x, transform.y + velY, 32.0f, 32.0f)) {
+            if (level.collides(transform.x, transform.y + velY, 64.0f, 64.0f)) {
                 velY = 0.0f
             }
 
@@ -390,11 +393,11 @@ class Player : Entity() {
                 }
 
                 val transform = getTransform()
-                if (level.collides(transform.x + velX, transform.y, 32.0f, 32.0f)) {
+                if (level.collides(transform.x + velX, transform.y, 64.0f, 64.0f)) {
                     velX = 0.0f
                 }
 
-                if (level.collides(transform.x, transform.y + velY, 32.0f, 32.0f)) {
+                if (level.collides(transform.x, transform.y + velY, 64.0f, 64.0f)) {
                     velY = 0.0f
                 }
 

@@ -30,6 +30,5 @@ void main() {
 
     float u = float(uv&1);
     float v = float((uv>>1)&1);
-    Uv = vec2(u,
-                  v);
+    Uv = vec2(u,v);
 }

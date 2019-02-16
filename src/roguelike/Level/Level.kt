@@ -676,9 +676,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         if (firstBuild) {
-            backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
+            //backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
             frontTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, frontIndices)
-            backTilemap.update(backIndices)
+            //backTilemap.update(backIndices)
             frontTilemap.update(frontIndices)
             backTilemap.transform.setPosition(0.0f, 0.0f, 1.0f)
             frontTilemap.transform.setPosition(0.0f, 0.0f, 10.0f)
@@ -686,7 +686,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             firstBuild = false
         }
         else {
-            backTilemap.update(backIndices)
+            //backTilemap.update(backIndices)
             frontTilemap.update(frontIndices)
         }
     }
@@ -715,7 +715,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         generateLightMap(backIndices)
-        backTilemap.update(backIndices)
+//        backTilemap.update(backIndices)
     }
 
     private fun generateLightMap(backIndices: Array<TileGfx>) {

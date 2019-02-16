@@ -202,7 +202,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         // TODO: Constant window dimensions
         level.create(resourceFactory, scene, 8960 / 64, 5376 / 64, 1280 / 64, 768 / 64)
         level.buildFirstRoom()
-        scene.addTilemap(level.backTilemap)
+        //scene.addTilemap(level.backTilemap)
         scene.addTilemap(level.frontTilemap)
 
         camera = Camera(Vector2f(0.0f, 20.0f))
@@ -220,6 +220,11 @@ class GameState(stateManager: StateManager): State(stateManager) {
         container = gui.newContainer(1280.0f/2.0f - 100, 768.0f - 40.0f, 200.0f, 40.0f)
         currentLevelText = container.addText("Current Level: ${player.currentLevel}", 0.0f, 0.0f, background = true)
         currentLevelText.x += currentLevelText.w/2.0f
+
+        val testEmitter = scene.createParticleEmitter(1.0f, 32.0f, 4, 10.0f)
+        testEmitter.getTransform().z = 5.0f
+        testEmitter.getTransform().sx = 10.0f
+        testEmitter.getTransform().sy = 10.0f
     }
 
     override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
