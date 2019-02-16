@@ -32,7 +32,7 @@ class StoneRat(random: Random, player: Player): Enemy(random, player) {
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
         super.update(scene, input, system, deltaTime)
-        val transform = getTransform()
+        val transform = transform
         transform.z = 1.0f + transform.y * 0.001f
         handleDamage(transform)
     }

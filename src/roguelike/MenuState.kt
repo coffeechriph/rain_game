@@ -18,7 +18,7 @@ import rain.api.scene.Camera
 import rain.api.scene.Scene
 
 class MenuState(stateManager: StateManager): State(stateManager) {
-    private var camera = Camera(Vector2f(0.0f, 20.0f))
+    private var camera = Camera(Vector2f(0.0f, 40.0f))
     private lateinit var menuContainer: Container
     private lateinit var startGameButton: ToggleButton
     private lateinit var settingsButton: ToggleButton
@@ -89,7 +89,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
                 .build()
         bannerEntity.getRenderComponents()[0].addCustomUniformData(0, 1.0f)
 
-        val bannerTransform = bannerEntity.getTransform()
+        val bannerTransform = bannerEntity.transform
         bannerTransform.sx = 1024.0f
         bannerTransform.sy = 256.0f
         bannerTransform.x = 1280.0f / 2.0f

@@ -106,7 +106,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     }
 
     fun update(deltaTime: Float, input: Input) {
-        val lc = lightIntensityAt(player.getTransform().x, player.getTransform().y)
+        val lc = lightIntensityAt(player.transform.x, player.transform.y)
         player.getRenderComponents()[0].addCustomUniformData(0, lc)
         player.bootsArmor.getRenderComponents()[0].addCustomUniformData(1, lc)
         player.chestArmor.getRenderComponents()[0].addCustomUniformData(1, lc)
@@ -144,8 +144,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 navMesh.map[enemy.lastX + enemy.lastY * width] = 0
             }
 
-            var x = enemy.getTransform().x.toInt()/64
-            var y = enemy.getTransform().y.toInt()/64
+            var x = enemy.transform.x.toInt()/64
+            var y = enemy.transform.y.toInt()/64
 
             val elc = lightValues[x + y * width].w
             enemy.getRenderComponents()[0].addCustomUniformData(0, elc)
@@ -176,8 +176,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 enemyTargetEntity.getRenderComponents()[0].visible = false
             }
             else {
-                var pdx = player.getTransform().x - enemy.getTransform().x
-                var pdy = player.getTransform().y - enemy.getTransform().y
+                var pdx = player.transform.x - enemy.transform.x
+                var pdy = player.transform.y - enemy.transform.y
                 val pln = Math.sqrt((pdx * pdx + pdy * pdy).toDouble()).toFloat()
                 pdx /= pln
                 pdy /= pln
@@ -199,10 +199,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
                 enemyTargetEntity.getRenderComponents()[0].visible = true
 
-                val targetTransform = enemyTargetEntity.getTransform()
+                val targetTransform = enemyTargetEntity.transform
                 targetTransform.z = 19.0f
-                targetTransform.x = enemy.getTransform().x
-                targetTransform.y = enemy.getTransform().y
+                targetTransform.x = enemy.transform.x
+                targetTransform.y = enemy.transform.y
                 targetTransform.sx = 64.0f
                 targetTransform.sy = 64.0f
             }
@@ -221,8 +221,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                                 .attachRenderComponent(itemMaterial, quadMesh)
                                 .build()
 
-                        var px = enemy.getTransform().x.toInt() + (Math.sin(random.nextFloat()*Math.PI*2) * 32.0f).toInt()
-                        var py = enemy.getTransform().y.toInt() + (Math.cos(random.nextFloat()*Math.PI*2) * 32.0f).toInt()
+                        var px = enemy.transform.x.toInt() + (Math.sin(random.nextFloat()*Math.PI*2) * 32.0f).toInt()
+                        var py = enemy.transform.y.toInt() + (Math.cos(random.nextFloat()*Math.PI*2) * 32.0f).toInt()
 
                         if (px < 0) {
                             px = 0
@@ -239,8 +239,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                         }
 
                         xpBall.setPosition(xpBallSystem, Vector2i(px, py))
-                        xpBall.getTransform().sx = random.nextFloat() * 16.0f + 40.0f
-                        xpBall.getTransform().sy = random.nextFloat() * 16.0f + 40.0f
+                        xpBall.transform.sx = random.nextFloat() * 16.0f + 40.0f
+                        xpBall.transform.sy = random.nextFloat() * 16.0f + 40.0f
                         xpBall.getRenderComponents()[0].textureTileOffset = Vector2i(5,14)
                         xpBall.getRenderComponents()[0].addCustomUniformData(0, 1.0f)
                     }
@@ -251,17 +251,17 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 continue
             }
 
-            val etx = (enemy.getTransform().x / 64.0f).toInt()
-            val ety = (enemy.getTransform().y / 64.0f).toInt()
-            val ptx = (player.getTransform().x / 64.0f).toInt()
-            val pty = (player.getTransform().y / 64.0f).toInt()
+            val etx = (enemy.transform.x / 64.0f).toInt()
+            val ety = (enemy.transform.y / 64.0f).toInt()
+            val ptx = (player.transform.x / 64.0f).toInt()
+            val pty = (player.transform.y / 64.0f).toInt()
 
             if (etx == ptx && Math.abs(pty-ety) <= 2 ||
                 ety == pty && Math.abs(ptx-etx) <= 2) {
                 enemy.attack()
             }
 
-            enemy.healthBar.getTransform().sx = enemy.health / 2.0f
+            enemy.healthBar.transform.sx = enemy.health / 2.0f
 
             // Enemies will not move when attacking
             if (enemy.attacking) {
@@ -269,14 +269,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
 
             if (!enemy.traversing) {
-                val kx = player.getTransform().x - enemy.getTransform().x
-                val ky = player.getTransform().y - enemy.getTransform().y
+                val kx = player.transform.x - enemy.transform.x
+                val ky = player.transform.y - enemy.transform.y
                 val dd = Math.sqrt((kx*kx+ky*ky).toDouble())
                 if (dd > 32.0f) {
-                    val worldX = enemy.getTransform().x / 64
-                    val worldY = enemy.getTransform().y / 64
-                    val px = (player.getTransform().x / 64).toInt()
-                    val py = (player.getTransform().y / 64).toInt()
+                    val worldX = enemy.transform.x / 64
+                    val worldY = enemy.transform.y / 64
+                    val px = (player.transform.x / 64).toInt()
+                    val py = (player.transform.y / 64).toInt()
 
                     if (px < width && py < height && px >= 0 && py >= 0) {
                         val path = navMesh.findPath(Vector2i(worldX.toInt(), worldY.toInt()), Vector2i(px, py))
@@ -287,8 +287,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                                 enemy.traversing = true
                                 enemy.traverseSleep = System.currentTimeMillis()
 
-                                val dx2 = player.getTransform().x - enemy.getTransform().x
-                                val dy2 = player.getTransform().y - enemy.getTransform().y
+                                val dx2 = player.transform.x - enemy.transform.x
+                                val dy2 = player.transform.y - enemy.transform.y
                                 enemy.lastPlayerAngle = Math.atan2(dy2.toDouble(), dx2.toDouble()).toFloat()
                             }
                         }
@@ -300,8 +300,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 val target = Vector2i(enemy.path[enemy.pathIndex])
                 target.x *= 64
                 target.y *= 64
-                val dx2 = (target.x + 32) - enemy.getTransform().x
-                val dy2 = (target.y + 32) - enemy.getTransform().y
+                val dx2 = (target.x + 32) - enemy.transform.x
+                val dy2 = (target.y + 32) - enemy.transform.y
                 val ln = Math.sqrt((dx2*dx2+dy2*dy2).toDouble());
                 var vx: Float
                 var vy: Float
@@ -316,8 +316,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
                 if (enemy.pushBack == 0) {
                     enemy.pushBackImmune = false
-                    enemy.getTransform().x += vx * enemy.walkingSpeedFactor
-                    enemy.getTransform().y += vy * enemy.walkingSpeedFactor
+                    enemy.transform.x += vx * enemy.walkingSpeedFactor
+                    enemy.transform.y += vy * enemy.walkingSpeedFactor
                     if (vy > 0.0f) {
                         enemy.animator.setAnimation("walk_down")
                     }
@@ -326,8 +326,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     }
                 }
                 else if (enemy.pushBack > 5) {
-                    enemy.getTransform().x += enemy.pushDirection.x.toFloat()
-                    enemy.getTransform().y += enemy.pushDirection.y.toFloat()
+                    enemy.transform.x += enemy.pushDirection.x.toFloat()
+                    enemy.transform.y += enemy.pushDirection.y.toFloat()
                     enemy.pushBack -= 1
                     enemy.animator.setAnimation("idle_down")
                 }
@@ -336,8 +336,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     enemy.animator.setAnimation("idle_down")
                 }
 
-                val dx3 = (target.x + 32) - enemy.getTransform().x
-                val dy3 = (target.y + 32) - enemy.getTransform().y
+                val dx3 = (target.x + 32) - enemy.transform.x
+                val dy3 = (target.y + 32) - enemy.transform.y
                 val ln2 = Math.sqrt((dx3 * dx3 + dy3 * dy3).toDouble());
                 if (ln2 <= 4.0f) {
                     enemy.pathIndex += 1
@@ -355,14 +355,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         for (container in activeContainers) {
-            val tx = (container.getTransform().x / 64.0f).toInt()
-            val ty = (container.getTransform().y / 64.0f).toInt()
+            val tx = (container.transform.x / 64.0f).toInt()
+            val ty = (container.transform.y / 64.0f).toInt()
             val clc = lightValues[tx + ty * width].w
             container.getRenderComponents()[0].addCustomUniformData(0, clc)
 
             if (!container.open && !container.looted) {
-                if (player.attack.getTransform().x + 32.0f >= container.getTransform().x - 32.0f && player.attack.getTransform().x - 32.0f <= container.getTransform().x + 32.0f &&
-                    player.attack.getTransform().y + 32.0f >= container.getTransform().y - 32.0f && player.attack.getTransform().y - 32.0f <= container.getTransform().y + 32.0f) {
+                if (player.attack.transform.x + 32.0f >= container.transform.x - 32.0f && player.attack.transform.x - 32.0f <= container.transform.x + 32.0f &&
+                    player.attack.transform.y + 32.0f >= container.transform.y - 32.0f && player.attack.transform.y - 32.0f <= container.transform.y + 32.0f) {
                     container.open = true
                 }
             }
@@ -408,12 +408,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     val direction = Vector2f(Math.sin(angle).toFloat(), Math.cos(angle).toFloat())
                     direction.x *= 64.0f
                     direction.y *= 64.0f
-                    item.setPosition(Vector2i(container.getTransform().x.toInt()+direction.x.toInt(), container.getTransform().y.toInt()+direction.y.toInt()))
+                    item.setPosition(Vector2i(container.transform.x.toInt()+direction.x.toInt(), container.transform.y.toInt()+direction.y.toInt()))
                     item.cellX = player.cellX
                     item.cellY = player.cellY
-                    item.getTransform().sx = 40.0f
-                    item.getTransform().sy = 40.0f
-                    item.getTransform().z = 2.0f
+                    item.transform.sx = 40.0f
+                    item.transform.sy = 40.0f
+                    item.transform.z = 2.0f
                     item.getRenderComponents()[0].textureTileOffset = Vector2i(3+combination.first.textureOffset.x,11+combination.first.textureOffset.y)
                 }
             }
@@ -560,8 +560,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 lights.getRenderComponents()[0].visible = false
             }
 
-            val emitter = lights.getParticleEmitters()[0]
-            emitter.enabled = false
+            lights.emitter.enabled = false
         }
 
         activeEnemies.clear()
@@ -602,16 +601,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 if (light.cellX == cellX && light.cellY == cellY) {
                     light.getRenderComponents()[0].visible = false
 
-                    val emitter = light.getParticleEmitters()[0]
-                    emitter.enabled = true
+                    light.emitter.enabled = true
                     activeLightSources.add(light)
                 }
             }
 
             for (light in room.campfire) {
                 if (light.cellX == cellX && light.cellY == cellY) {
-                    val emitter = light.getParticleEmitters()[0]
-                    emitter.enabled = true
+                    light.emitter.enabled = true
                     activeLightSources.add(light)
                 }
             }
@@ -642,7 +639,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 collisionSystem.newEntity(e)
                         .attachBoxColliderComponent(64.0f, 64.0f, BodyDef.BodyType.StaticBody)
                         .build()
-                val tr = e.getTransform()
+                val tr = e.transform
                 val cl = collisionSystem.findColliderComponent(e.getId())!!
                 cl.setPosition(cx + 32.0f, cy + 32.0f)
                 cl.setFriction(0.15f)
@@ -669,16 +666,16 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         for (container in activeContainers) {
             if (container.cellX == cellX && container.cellY == cellY) {
-                val ix: Int = (container.getTransform().x/64).toInt()
-                val iy: Int = (container.getTransform().y/64).toInt()
+                val ix: Int = (container.transform.x/64).toInt()
+                val iy: Int = (container.transform.y/64).toInt()
                 navMesh.map[ix + iy*width] = 127.toByte()
             }
         }
 
         if (firstBuild) {
-            //backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
+            backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
             frontTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, frontIndices)
-            //backTilemap.update(backIndices)
+            backTilemap.update(backIndices)
             frontTilemap.update(frontIndices)
             backTilemap.transform.setPosition(0.0f, 0.0f, 1.0f)
             frontTilemap.transform.setPosition(0.0f, 0.0f, 10.0f)
@@ -686,7 +683,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             firstBuild = false
         }
         else {
-            //backTilemap.update(backIndices)
+            backTilemap.update(backIndices)
             frontTilemap.update(frontIndices)
         }
     }
@@ -715,7 +712,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         generateLightMap(backIndices)
-//        backTilemap.update(backIndices)
+        backTilemap.update(backIndices)
     }
 
     private fun generateLightMap(backIndices: Array<TileGfx>) {
@@ -726,7 +723,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         // Put out light values
         for (light in activeLightSources) {
-            val t = light.getTransform()
+            val t = light.transform
             var x = ((t.x-32.0f) / 64.0f).toInt()
             var y = ((t.y-32.0f) / 64.0f).toInt()
 
@@ -741,15 +738,15 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         // Put out light values at XpBalls
         for (xp in xpBallSystem.getEntityList()) {
             if (xp!!.getRenderComponents()[0].visible) {
-                val t = xp.getTransform()
+                val t = xp.transform
                 val x = (t.x / 64.0f).toInt()
                 val y = (t.y / 64.0f).toInt()
                 spreadLight(x, y, Vector4f(0.0f, 1.0f, 0.0f, 1.0f))
             }
         }
 
-        val px = ((player.getTransform().x) / 64.0f).toInt()
-        val py = ((player.getTransform().y) / 64.0f).toInt()
+        val px = ((player.transform.x) / 64.0f).toInt()
+        val py = ((player.transform.y) / 64.0f).toInt()
         spreadLight(px, py, Vector4f(0.48f, 0.62f, 0.69f, 1.0f))
 
         var x = 0.0f
@@ -913,7 +910,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
     }
 
-    fun buildFirstRoom() {
+    fun buildFirstRoom(scene: Scene) {
         random = Random(System.currentTimeMillis())
         var x = 0
         var y = 0
@@ -958,25 +955,30 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, exitType)
-        room.generateLightsInRoom(random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
+        room.generateLightsInRoom(scene, random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
 
         // Put campfire next to exit on first level
+        val emitter = scene.createParticleEmitter(2.0f, 40, 20.0f)
+        emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
+        emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.1f)
+        emitter.velocity.y = -20.0f
+        emitter.transform.y = 16.0f
+        emitter.transform.sx = 48.0f
+        emitter.transform.sy = 48.0f
+        emitter.transform.z = 5.0f
+        emitter.enabled = false
+
         val tx = exitPosition.x % width
         val ty = exitPosition.y % height
-        val et = LightSource(exitPosition.x / width, exitPosition.y / height, Vector3f(0.9f, 0.55f, 0.1f))
+        val et = LightSource(exitPosition.x / width, exitPosition.y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
         torchSystem.newEntity(et)
-                .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
                 .build()
-        val etTransform = et.getTransform()
-        etTransform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
-        etTransform.sx = 64.0f
-        etTransform.sy = 64.0f
 
-        val emitter = et.getParticleEmitters()[0]
-        emitter.startSize = 20.0f
-        emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
-        emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.0f)
-        emitter.enabled = false
+        et.transform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 1.0f)
+        et.transform.sx = 1.0f
+        et.transform.sy = 1.0f
+
+        emitter.transform.parentTransform = et.transform
         room.campfire.add(et)
 
         // Give the player a nice chest to start off with
@@ -1000,7 +1002,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         room.containers.add(container)
     }
 
-    fun build(seed: Long, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
+    fun build(seed: Long, scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
         random = Random(seed)
         generate(random.nextInt(5) + 1)
         addWallBlockersAtEdges()
@@ -1026,7 +1028,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, exitType)
 
-        generateRooms(healthBarSystem, healthBarMaterial)
+        generateRooms(scene, healthBarSystem, healthBarMaterial)
 
         val pixelData = BufferUtils.createByteBuffer(mapWidth * mapHeight * 3)
         for (room in rooms) {
@@ -1055,8 +1057,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
 
             for (enemy in room.enemies) {
-                val x = ((enemy.getTransform().x / 64.0f) + (enemy.cellX * width)).toInt()
-                val y = ((enemy.getTransform().y / 64.0f) + (enemy.cellY * height)).toInt()
+                val x = ((enemy.transform.x / 64.0f) + (enemy.cellX * width)).toInt()
+                val y = ((enemy.transform.y / 64.0f) + (enemy.cellY * height)).toInt()
 
                 pixelData.put((x + y * mapWidth) * 3, 127)
                 pixelData.put((x + y * mapWidth) * 3 + 1, 0)
@@ -1064,8 +1066,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
 
             for (container in room.containers) {
-                val x = ((container.getTransform().x / 64.0f) + (container.cellX * width)).toInt()
-                val y = ((container.getTransform().y / 64.0f) + (container.cellY * height)).toInt()
+                val x = ((container.transform.x / 64.0f) + (container.cellX * width)).toInt()
+                val y = ((container.transform.y / 64.0f) + (container.cellY * height)).toInt()
                 pixelData.put((x + y * mapWidth) * 3, 127)
                 pixelData.put((x + y * mapWidth) * 3 + 1, 100)
                 pixelData.put((x + y * mapWidth) * 3 + 2, 0)
@@ -1563,7 +1565,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         return tiles
     }
 
-    private fun generateRooms(healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
+    private fun generateRooms(scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
         for (room in rooms) {
             // Only generate enemies in the correct rooms
             if (room.type.hasEnemies) {
@@ -1592,6 +1594,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 val lightDensity = room.tiles.size / 48
                 val numLights = random.nextInt(lightDensity) + 1
                 room.generateLightsInRoom(
+                    scene,
                     random,
                     map,
                     mapWidth,

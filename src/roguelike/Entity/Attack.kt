@@ -31,7 +31,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        val transform = getTransform()
+        val transform = transform
         transform.setPosition(1200.0f,600.0f, 9.0f)
         transform.setScale(72.0f,72.0f)
         getRenderComponents()[0].addCustomUniformData(0, 1.0f)
@@ -42,7 +42,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
 
         if (active) {
             if (!getRenderComponents()[0].visible) {
-                val transform = getTransform()
+                val transform = transform
                 transform.z = parentTransform.z + 0.01f
 
                 when (direction) {

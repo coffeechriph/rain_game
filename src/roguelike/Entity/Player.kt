@@ -88,8 +88,8 @@ class Player : Entity() {
         damageShake = 1.0f
         healthDamaged += value
 
-        val dx = getTransform().x - fromX
-        val dy = getTransform().y - fromY
+        val dx = transform.x - fromX
+        val dy = transform.y - fromY
         val ln = Math.sqrt((dx*dx+dy*dy).toDouble()).toFloat()
         damagePushVelX = dx / ln
         damagePushVelY = dy / ln
@@ -153,9 +153,9 @@ class Player : Entity() {
     fun damageEnemies(enemies: ArrayList<Enemy>) {
         if (attack.isActive()) {
             for (enemy in enemies) {
-                val enemyTransform = enemy.getTransform()
-                if (enemyTransform.x + 32.0f >= attack.getTransform().x - 32.0f && enemyTransform.x - 32.0f <= attack.getTransform().x + 32.0f &&
-                    enemyTransform.y + 32.0f >= attack.getTransform().y - 32.0f && enemyTransform.y - 32.0f <= attack.getTransform().y + 32.0f) {
+                val enemyTransform = enemy.transform
+                if (enemyTransform.x + 32.0f >= attack.transform.x - 32.0f && enemyTransform.x - 32.0f <= attack.transform.x + 32.0f &&
+                    enemyTransform.y + 32.0f >= attack.transform.y - 32.0f && enemyTransform.y - 32.0f <= attack.transform.y + 32.0f) {
                     enemy.damage(this)
                     break
                 }
@@ -166,8 +166,8 @@ class Player : Entity() {
     fun setPosition(pos: Vector2i) {
         cellX = pos.x / 1280
         cellY = pos.y / 768
-        getTransform().x = pos.x.toFloat()%1280
-        getTransform().y = pos.y.toFloat()%768
+        transform.x = pos.x.toFloat()%1280
+        transform.y = pos.y.toFloat()%768
         getMoveComponent()!!.update(0.0f, 0.0f)
         playerMovedCell = true
     }
@@ -175,7 +175,7 @@ class Player : Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         renderComponent = getRenderComponents()[0]
         animator = getAnimatorComponent()[0]
-        getTransform().setScale(64.0f,64.0f)
+        transform.setScale(64.0f,64.0f)
 
         animator.addAnimation("idle_down", 0, 0, 0, 0.0f)
         animator.addAnimation("walk_down", 0, 4, 0, GLOBAL_ANIMATION_SPEED)
@@ -190,7 +190,7 @@ class Player : Entity() {
         animator.addAnimation("walk_up", 0, 4, 3, GLOBAL_ANIMATION_SPEED)
         animator.setAnimation("idle_down")
 
-        attack = Attack(getTransform())
+        attack = Attack(transform)
         attack.attacker = this
 
         chestArmor = Entity()
@@ -223,11 +223,11 @@ class Player : Entity() {
     }
 
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
-        val chestTransform = chestArmor.getTransform()
-        val legsTransform = legsArmor.getTransform()
-        val handsTransform = handsArmor.getTransform()
-        val bootsTransform = bootsArmor.getTransform()
-        val transform = getTransform()
+        val chestTransform = chestArmor.transform
+        val legsTransform = legsArmor.transform
+        val handsTransform = handsArmor.transform
+        val bootsTransform = bootsArmor.transform
+        val transform = transform
 
         chestTransform.x = transform.x
         chestTransform.y = transform.y
@@ -367,7 +367,7 @@ class Player : Entity() {
                 Direction.NONE -> {}
             }
 
-            val transform = getTransform()
+            val transform = transform
             if (level.collides(transform.x + velX, transform.y, 64.0f, 64.0f)) {
                 velX = 0.0f
             }
@@ -392,7 +392,7 @@ class Player : Entity() {
                     Direction.DOWN -> velY += speed * 2
                 }
 
-                val transform = getTransform()
+                val transform = transform
                 if (level.collides(transform.x + velX, transform.y, 64.0f, 64.0f)) {
                     velX = 0.0f
                 }
@@ -487,7 +487,7 @@ class Player : Entity() {
 
     // TODO: This method uses constant window dimensions
     private fun keepPlayerWithinBorder(velX: Float, velY: Float) {
-        val transform = getTransform()
+        val transform = transform
         if (transform.x < 0 && velX < 0.0f) {
             if (cellX > 0) {
                 transform.x = 1270.0f

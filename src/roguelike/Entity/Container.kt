@@ -15,7 +15,7 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
 
     // TODO: Constant window size
     fun setPosition(pos: Vector2i) {
-        val transform = getTransform()!!
+        val transform = transform!!
         transform.z = 2.0f + transform.y * 0.001f
         transform.setScale(64.0f, 64.0f)
         cellX = pos.x / 1280

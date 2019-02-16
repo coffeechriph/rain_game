@@ -65,7 +65,7 @@ class Item (val player: Player,
 
     // TODO: Constant window size
     fun setPosition(pos: Vector2i) {
-        val transform = getTransform()
+        val transform = transform
         transform.x = pos.x.toFloat()
         transform.y = pos.y.toFloat()
         transform.z = 1.1f + transform.y * 0.001f
@@ -80,20 +80,20 @@ class Item (val player: Player,
     override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
         if (getRenderComponents()[0].visible) {
             time += 1.0f / 60.0f
-            val transform = getTransform()
+            val transform = transform
             transform.y += Math.sin(time.toDouble()).toFloat() * 0.1f
             getRenderComponents()[0].addCustomUniformData(0, player.level.lightIntensityAt(transform.x, transform.y))
 
             if (!beginPickup && !pickedUp) {
-                if (player.getTransform().x >= transform.x - 128 && player.getTransform().x <= transform.x + 128 &&
-                    player.getTransform().y >= transform.y - 128 && player.getTransform().y <= transform.y + 128) {
+                if (player.transform.x >= transform.x - 128 && player.transform.x <= transform.x + 128 &&
+                    player.transform.y >= transform.y - 128 && player.transform.y <= transform.y + 128) {
                     beginPickup = true
                     acc = 0.0000000000001
                 }
             }
             else {
-                val dx = (player.getTransform().x - transform.x) / 64.0
-                val dy = (player.getTransform().y - transform.y) / 64.0
+                val dx = (player.transform.x - transform.x) / 64.0
+                val dy = (player.transform.y - transform.y) / 64.0
                 val ln = Math.sqrt((dx*dx+dy*dy))
                 transform.x += ((dx / ln) * acc).toFloat()
                 transform.y += ((dy / ln) * acc).toFloat()
@@ -101,8 +101,8 @@ class Item (val player: Player,
                     acc += acc
                 }
 
-                if (player.getTransform().x >= transform.x - 8 && player.getTransform().x <= transform.x + 8 &&
-                    player.getTransform().y >= transform.y - 8 && player.getTransform().y <= transform.y + 8) {
+                if (player.transform.x >= transform.x - 8 && player.transform.x <= transform.x + 8 &&
+                    player.transform.y >= transform.y - 8 && player.transform.y <= transform.y + 8) {
                     pickedUp = true
                     beginPickup = false
                     getRenderComponents()[0].visible = false

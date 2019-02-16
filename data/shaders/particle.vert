@@ -22,8 +22,8 @@ layout (location = 1) out vec2 Uv;
 
 void main() {
     vec2 TextureOffset = vec2(0.0f, 0.0f);
-    float x = float(pos.x);
-    float y = float(pos.y);
+    float x = float(pos.x) * 0.01;
+    float y = float(pos.y) * 0.01;
     float z = float((uv >> 2)) / 1000.0f;
     color = mix(inData.startColor, inData.endColor, z);
     gl_Position = sceneData.projectionMatrix * inData.matrix * vec4(x, y, 1.0 - z, 1.0);

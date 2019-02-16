@@ -7,6 +7,7 @@ import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.Material
 import rain.api.gfx.Mesh
+import rain.api.scene.Scene
 import roguelike.Entity.*
 
 enum class EnemyType {
@@ -125,7 +126,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             attackRenderComponent.textureTileOffset.set(5,15)
 
             enemyEntity.attackAreaVisualRenderComponent = attackRenderComponent
-            enemyEntity.attackAreaVisualTransform = enemyEntity.attackAreaVisual.getTransform()
+            enemyEntity.attackAreaVisualTransform = enemyEntity.attackAreaVisual.transform
 
             val levelFactor = (player.currentLevel*1.5f).toInt()
             enemyEntity.strength = (random.nextInt(levelFactor) + levelFactor*10 * enemyEntity.strengthFactor).toInt()
@@ -133,7 +134,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             enemyEntity.health = (100 + random.nextInt(levelFactor) * enemyEntity.healthFactor).toInt()
             enemyEntity.getRenderComponents()[0].visible = false
 
-            val et = enemyEntity.getTransform()
+            val et = enemyEntity.transform
             enemyEntity.healthBar.parentTransform = et
 
             healthBarSystem.newEntity(enemyEntity.healthBar)
@@ -141,8 +142,8 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                     .build()
 
             enemyEntity.healthBar.getRenderComponents()[0].visible = false
-            enemyEntity.healthBar.getTransform().sx = 60.0f
-            enemyEntity.healthBar.getTransform().sy = 7.0f
+            enemyEntity.healthBar.transform.sx = 60.0f
+            enemyEntity.healthBar.transform.sy = 7.0f
 
             enemyEntity.setPosition(Vector2i(p.x*64, p.y*64))
             enemies.add(enemyEntity)
@@ -177,7 +178,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
         }
     }
 
-    internal fun generateLightsInRoom(random: Random, map: IntArray, mapWidth: Int, width: Int, height: Int, torches: Int, campfire: Boolean, torchSystem: EntitySystem<LightSource>, torchMaterial: Material, quadMesh: Mesh) {
+    internal fun generateLightsInRoom(scene: Scene, random: Random, map: IntArray, mapWidth: Int, width: Int, height: Int, torches: Int, campfire: Boolean, torchSystem: EntitySystem<LightSource>, torchMaterial: Material, quadMesh: Mesh) {
         var numTorches = 0
         for (tile in tiles) {
             val x = tile.x
@@ -185,23 +186,26 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             if (y > 0 && map[x + (y-1)*mapWidth] == 1) {
                 val tx = x % width
                 val ty = y % height
-                val et = LightSource(x / width, y / height, Vector3f(0.9f, 0.55f, 0.1f))
+
+                val emitter = scene.createParticleEmitter(2.0f, 8, 20.0f)
+                // emitter.startSize = 5.0f
+                emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
+                emitter.endColor.set(1.0f, 0.3f, 0.0f, 0.1f)
+                emitter.enabled = false
+                emitter.transform.sx = 1.0f
+                emitter.transform.sy = 1.0f
+                emitter.velocity.y = -30.0f
+
+                val et = LightSource(x / width, y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
                 torchSystem.newEntity(et)
                         .attachRenderComponent(torchMaterial, quadMesh)
-                        .attachParticleEmitter(10, 16.0f, 1.0f, Vector2f(0.0f, -10.0f), DirectionType.LINEAR, 4.0f, 0.5f)
                         .build()
-                val etTransform = et.getTransform()
-                etTransform.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat(), 18.0f)
-                etTransform.sx = 48.0f
-                etTransform.sy = 48.0f
-
+                et.transform.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat(), 18.0f)
+                et.transform.sx = 24.0f
+                et.transform.sy = 24.0f
+                emitter.transform.parentTransform = et.transform
                 et.getRenderComponents()[0].visible = false
 
-                val emitter = et.getParticleEmitters()[0]
-                emitter.startSize = 5.0f
-                emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
-                emitter.endColor.set(1.0f, 0.3f, 0.0f, 0.5f)
-                emitter.enabled = false
                 this.torches.add(et)
                 numTorches++
             }
@@ -216,20 +220,21 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             if (tile != null) {
                 val tx = tile.x % width
                 val ty = tile.y % height
-                val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f))
-                torchSystem.newEntity(et)
-                        .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
-                        .build()
-                val etTransform = et.getTransform()
-                etTransform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
-                etTransform.sx = 64.0f
-                etTransform.sy = 64.0f
 
-                val emitter = et.getParticleEmitters()[0]
-                emitter.startSize = 20.0f
+                val emitter = scene.createParticleEmitter(0.7f, 20, 20.0f)
+                // emitter.startSize = 20.0f
                 emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
                 emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.0f)
                 emitter.enabled = false
+
+                val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
+                torchSystem.newEntity(et)
+                        .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
+                        .build()
+                et.transform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
+                et.transform.sx = 64.0f
+                et.transform.sy = 64.0f
+                emitter.transform.parentTransform = et.transform
                 this.campfire.add(et)
             }
         }
