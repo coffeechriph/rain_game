@@ -31,9 +31,10 @@ class Attack(private val parentTransform: Transform) : Entity() {
     }
 
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        val transform = transform
         transform.setPosition(1200.0f,600.0f, 9.0f)
-        transform.setScale(72.0f,72.0f)
+        transform.setScale(1.0f, 1.0f)
+        //transform.setScale(72.0f,72.0f)
+        transform.parentTransform = parentTransform
         getRenderComponents()[0].addCustomUniformData(0, 1.0f)
     }
 
@@ -43,30 +44,30 @@ class Attack(private val parentTransform: Transform) : Entity() {
         if (active) {
             if (!getRenderComponents()[0].visible) {
                 val transform = transform
-                transform.z = parentTransform.z + 0.01f
+                transform.z = 1.0f
 
                 when (direction) {
                     Direction.LEFT -> {
-                        transform.x = parentTransform.x - 32
-                        transform.y = parentTransform.y
+                        transform.x = 0.2f
+                        transform.y = 0.0f
                         transform.rot = Math.PI.toFloat() * 0.75f
                         animator.setAnimation("attack", true)
                     }
                     Direction.RIGHT -> {
-                        transform.x = parentTransform.x + 32
-                        transform.y = parentTransform.y
+                        transform.x = 0.1f
+                        transform.y = 0.1f
                         transform.rot = Math.PI.toFloat() * 1.75f
                         animator.setAnimation("attack", true)
                     }
                     Direction.UP -> {
-                        transform.x = parentTransform.x
-                        transform.y = parentTransform.y - 32
+                        transform.x = 0.1f
+                        transform.y = 0.1f
                         transform.rot = Math.PI.toFloat()
                         animator.setAnimation("attack", true)
                     }
                     Direction.DOWN -> {
-                        transform.x = parentTransform.x
-                        transform.y = parentTransform.y + 32
+                        transform.x = 0.0f
+                        transform.y = 0.2f
                         transform.rot = 0.0f
                         animator.setAnimation("attack", true)
                     }

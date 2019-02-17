@@ -154,8 +154,9 @@ class Player : Entity() {
         if (attack.isActive()) {
             for (enemy in enemies) {
                 val enemyTransform = enemy.transform
-                if (enemyTransform.x + 32.0f >= attack.transform.x - 32.0f && enemyTransform.x - 32.0f <= attack.transform.x + 32.0f &&
-                    enemyTransform.y + 32.0f >= attack.transform.y - 32.0f && enemyTransform.y - 32.0f <= attack.transform.y + 32.0f) {
+                val attackTransform = attack.transform.worldTransform()
+                if (enemyTransform.x + 32.0f >= attackTransform.x - 32.0f && enemyTransform.x - 32.0f <= attackTransform.x + 32.0f &&
+                    enemyTransform.y + 32.0f >= attackTransform.y - 32.0f && enemyTransform.y - 32.0f <= attackTransform.y + 32.0f) {
                     enemy.damage(this)
                     break
                 }

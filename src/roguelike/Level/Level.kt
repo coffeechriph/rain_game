@@ -361,8 +361,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             container.getRenderComponents()[0].addCustomUniformData(0, clc)
 
             if (!container.open && !container.looted) {
-                if (player.attack.transform.x + 32.0f >= container.transform.x - 32.0f && player.attack.transform.x - 32.0f <= container.transform.x + 32.0f &&
-                    player.attack.transform.y + 32.0f >= container.transform.y - 32.0f && player.attack.transform.y - 32.0f <= container.transform.y + 32.0f) {
+                val attackTransform = player.attack.transform.worldTransform()
+                if (attackTransform.x + 32.0f >= container.transform.x - 32.0f && attackTransform.x - 32.0f <= container.transform.x + 32.0f &&
+                    attackTransform.y + 32.0f >= container.transform.y - 32.0f && attackTransform.y - 32.0f <= container.transform.y + 32.0f) {
                     container.open = true
                 }
             }
