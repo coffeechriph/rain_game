@@ -2,6 +2,7 @@ package roguelike
 
 import org.joml.Random
 import org.joml.Vector2f
+import org.lwjgl.system.MemoryUtil.memAlloc
 import rain.State
 import rain.StateManager
 import rain.api.Input
@@ -14,6 +15,9 @@ import rain.api.gui.Gui
 import rain.api.gui.Text
 import rain.api.scene.Camera
 import rain.api.scene.Scene
+import rain.util.Earcut
+import rain.vulkan.DataType
+import rain.vulkan.VertexAttribute
 import roguelike.Entity.Attack
 import roguelike.Entity.HealthBar
 import roguelike.Entity.Inventory

@@ -14,6 +14,10 @@ import rain.api.gfx.TextureFilter
 import rain.api.gui.Container
 import rain.api.gui.Gui
 import rain.api.gui.ToggleButton
+import rain.api.gui.v2.Button
+import rain.api.gui.v2.GridLayout
+import rain.api.gui.v2.Slider
+import rain.api.gui.v2.guiManagerCreatePanel
 import rain.api.scene.Camera
 import rain.api.scene.Scene
 
@@ -30,6 +34,8 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
     private var buttonsAnimation = 0.0f
 
+    val button = Button()
+    val slider = Slider()
     override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
         scene.activeCamera = camera
 
@@ -40,8 +46,8 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         menuContainer.skin.foregroundColors["text"] = Vector3f(240.0f / 255.0f, 207.0f / 255.0f, 117.0f / 255.0f)
 
         startGameButton = ToggleButton()
-        startGameButton.x = 1280.0f / 2.0f - 100.0f
-        startGameButton.y = 280.0f
+        startGameButton.x = 1280.0f / 2.0f - 70.0f
+        startGameButton.y = 310.0f
         startGameButton.w = 200.0f
         startGameButton.h = 60.0f
         startGameButton.text = "New Game"
@@ -95,28 +101,47 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         bannerTransform.x = 1280.0f / 2.0f
         bannerTransform.y = 128.0f
         bannerTransform.z = 1.0f
+
+        val gridLayout = GridLayout()
+        gridLayout.gridW = 150.0f
+        gridLayout.gridH = 40.0f
+        val panel = guiManagerCreatePanel(gridLayout)
+        panel.w = 300.0f
+        panel.h = 300.0f
+        panel.x = 200.0f
+        panel.y = 200.0f
+
+        panel.addComponent(button)
+        panel.addComponent(slider)
     }
 
     override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
+        if (slider.valueChanged) {
+            println("Slider: ${slider.value}")
+        }
+        if (button.clicked) {
+            println("Resetted slider!")
+            slider.value = 0
+        }
         val scale = Math.sin(buttonsAnimation.toDouble()).toFloat() * 7.0f
         when (selectedButton) {
             0 -> {
                 startGameButton.w = 200.0f + scale
                 startGameButton.h = 60.0f + scale
-                startGameButton.x = 1280.0f / 2.0f - 100.0f - scale / 2.0f
-                startGameButton.y = 280.0f - scale / 2.0f
+                startGameButton.x = 1280.0f / 2.0f
+                startGameButton.y = 280.0f
                 startGameButton.outlineWidth = 4
                 startGameButton.active = true
                 settingsButton.active = false
                 exitButton.active = false
 
-                settingsButton.x = 1280.0f / 2.0f - 100.0f
+                settingsButton.x = 1280.0f / 2.0f
                 settingsButton.y = 370.0f
                 settingsButton.w = 200.0f
                 settingsButton.h = 60.0f
                 settingsButton.outlineWidth = 4
 
-                exitButton.x = 1280.0f / 2.0f - 100.0f
+                exitButton.x = 1280.0f / 2.0f
                 exitButton.y = 460.0f
                 exitButton.w = 200.0f
                 exitButton.h = 60.0f
@@ -125,18 +150,18 @@ class MenuState(stateManager: StateManager): State(stateManager) {
             1 -> {
                 settingsButton.w = 200.0f + scale
                 settingsButton.h = 60.0f + scale
-                settingsButton.x = 1280.0f / 2.0f - 100.0f - scale / 2.0f
-                settingsButton.y = 370.0f - scale / 2.0f
+                settingsButton.x = 1280.0f / 2.0f
+                settingsButton.y = 370.0f
                 settingsButton.active = true
                 startGameButton.active = false
                 exitButton.active = false
 
-                startGameButton.x = 1280.0f / 2.0f - 100.0f
+                startGameButton.x = 1280.0f / 2.0f
                 startGameButton.y = 280.0f
                 startGameButton.w = 200.0f
                 startGameButton.h = 60.0f
 
-                exitButton.x = 1280.0f / 2.0f - 100.0f
+                exitButton.x = 1280.0f / 2.0f
                 exitButton.y = 460.0f
                 exitButton.w = 200.0f
                 exitButton.h = 60.0f
@@ -144,18 +169,18 @@ class MenuState(stateManager: StateManager): State(stateManager) {
             2 -> {
                 exitButton.w = 200.0f + scale
                 exitButton.h = 60.0f + scale
-                exitButton.x = 1280.0f / 2.0f - 100.0f - scale / 2.0f
-                exitButton.y = 460.0f - scale / 2.0f
+                exitButton.x = 1280.0f / 2.0f
+                exitButton.y = 460.0f
                 exitButton.active = true
                 startGameButton.active = false
                 settingsButton.active = false
 
-                startGameButton.x = 1280.0f / 2.0f - 100.0f
+                startGameButton.x = 1280.0f / 2.0f
                 startGameButton.y = 280.0f
                 startGameButton.w = 200.0f
                 startGameButton.h = 60.0f
 
-                settingsButton.x = 1280.0f / 2.0f - 100.0f
+                settingsButton.x = 1280.0f / 2.0f
                 settingsButton.y = 370.0f
                 settingsButton.w = 200.0f
                 settingsButton.h = 60.0f

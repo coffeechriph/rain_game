@@ -9,7 +9,7 @@ class Roguelike: Rain() {
     // TODO: We can still load resources here which will be cleared once we switch state!!
     // This is "bad practice" but we should try to prevent that
     override fun init() {
-        showMouse = false
+        showMouse = true
         gameState = GameState(stateManager)
         stateManager.states.put("game", gameState)
 
