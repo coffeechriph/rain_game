@@ -160,17 +160,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             val container = Container(random.nextInt(2), random.nextInt(7) + 1)
             containerSystem.newEntity(container)
                     .attachRenderComponent(containerMaterial, quadMesh)
-                    .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                     .build()
-
-            val emitter = container.getBurstParticleEmitters()[0]
-            emitter.burstFinished = true
-            emitter.singleBurst = true
-            emitter.particlesPerBurst = 5
-            emitter.startColor = Vector4f(0.4f, 0.4f, 0.4f, 1.0f)
-            emitter.endColor = Vector4f(0.4f, 0.4f, 0.4f, 0.0f)
-            emitter.transform.z = 16.0f
-            emitter.enabled = false
 
             container.setPosition(Vector2i(tile.x*64 + 32, tile.y*64 + 32))
             container.getRenderComponents()[0].visible = false
@@ -229,7 +219,6 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
 
                 val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
                 torchSystem.newEntity(et)
-                        .attachParticleEmitter(20, 40.0f, 0.7f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 20.0f, 0.5f)
                         .build()
                 et.transform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
                 et.transform.sx = 64.0f

@@ -9,16 +9,16 @@ layout(location = 2) in vec4 containerData;
 layout(location = 3) in vec3 Color;
 
 void main() {
-    if (fpos.x < containerData.x || fpos.x > containerData.x + containerData.z ||
+    /*if (fpos.x < containerData.x || fpos.x > containerData.x + containerData.z ||
         fpos.y < containerData.y || fpos.y > containerData.y + containerData.w) {
       discard;
     }
-    else {
+    else {*/
       color.a = texture(texSampler, Uv).r;
       color.rgb = vec3(Color.x, Color.y, Color.z);
 
       if (color.a < 0.01f) {
           discard;
       }
-    }
+    //}
 }

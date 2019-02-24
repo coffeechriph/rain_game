@@ -14,10 +14,7 @@ import rain.api.gfx.TextureFilter
 import rain.api.gui.Container
 import rain.api.gui.Gui
 import rain.api.gui.ToggleButton
-import rain.api.gui.v2.Button
-import rain.api.gui.v2.GridLayout
-import rain.api.gui.v2.Slider
-import rain.api.gui.v2.guiManagerCreatePanel
+import rain.api.gui.v2.*
 import rain.api.scene.Camera
 import rain.api.scene.Scene
 
@@ -34,8 +31,9 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
     private var buttonsAnimation = 0.0f
 
-    val button = Button()
-    val slider = Slider()
+    lateinit var button: Button
+    lateinit var slider: Slider
+
     override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
         scene.activeCamera = camera
 
@@ -102,27 +100,20 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         bannerTransform.y = 128.0f
         bannerTransform.z = 1.0f
 
-        val gridLayout = GridLayout()
-        gridLayout.gridW = 150.0f
-        gridLayout.gridH = 40.0f
+        val gridLayout = FillRowLayout()
+        gridLayout.componentHeight = 30.0f
+        gridLayout.componentsPerRow = 2
         val panel = guiManagerCreatePanel(gridLayout)
         panel.w = 300.0f
         panel.h = 300.0f
         panel.x = 200.0f
         panel.y = 200.0f
 
-        panel.addComponent(button)
-        panel.addComponent(slider)
+        button = panel.createButton("Reset Slider")
+        slider = panel.createSlider(50, 0, 100)
     }
 
     override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
-        if (slider.valueChanged) {
-            println("Slider: ${slider.value}")
-        }
-        if (button.clicked) {
-            println("Resetted slider!")
-            slider.value = 0
-        }
         val scale = Math.sin(buttonsAnimation.toDouble()).toFloat() * 7.0f
         when (selectedButton) {
             0 -> {

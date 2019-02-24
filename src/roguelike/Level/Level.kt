@@ -370,8 +370,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             if (container.open && !container.looted) {
                 container.looted = true
-                val emitter = container.getBurstParticleEmitters()[0]
-                emitter.fireSingleBurst()
 
                 for (i in 0 until container.numItems) {
                     val combination = ITEM_COMBINATIONS[random.nextInt(ITEM_COMBINATIONS.size)]
@@ -592,8 +590,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             for (container in room.containers) {
                 if (container.cellX == cellX && container.cellY == cellY) {
                     container.getRenderComponents()[0].visible = container.cellX == cellX && container.cellY == cellY
-                    val emitter = container.getBurstParticleEmitters()[0]
-                    emitter.enabled = container.getRenderComponents()[0].visible
                     activeContainers.add(container)
                 }
             }
@@ -986,17 +982,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val container = Container(0, 5)
         containerSystem.newEntity(container)
                 .attachRenderComponent(itemMaterial, quadMesh)
-                .attachBurstParticleEmitter(25, 16.0f, 0.2f, Vector2f(0.0f, -50.0f), DirectionType.LINEAR, 32.0f, 0.5f)
                 .build()
-
-        val emitter2 = container.getBurstParticleEmitters()[0]
-        emitter2.burstFinished = true
-        emitter2.singleBurst = true
-        emitter2.particlesPerBurst = 5
-        emitter2.startColor = Vector4f(0.4f, 0.4f, 0.4f, 1.0f)
-        emitter2.endColor = Vector4f(0.4f, 0.4f, 0.4f, 0.0f)
-        emitter2.transform.z = 16.0f
-        emitter2.enabled = true
 
         container.setPosition(Vector2i((tx+1)*64 + 32, ty*64 + 32))
         container.getRenderComponents()[0].visible = true
