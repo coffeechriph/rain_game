@@ -33,6 +33,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
     lateinit var button: Button
     lateinit var slider: Slider
+    lateinit var checkbox: Checkbox
 
     override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
         scene.activeCamera = camera
@@ -111,6 +112,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
         button = panel.createButton("Reset Slider")
         slider = panel.createSlider(50, 0, 100)
+        checkbox = panel.createCheckbox("Check Me!")
     }
 
     override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
