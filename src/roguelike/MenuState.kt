@@ -34,6 +34,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
     lateinit var button: Button
     lateinit var slider: Slider
     lateinit var checkbox: Checkbox
+    lateinit var textField: TextField
 
     override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
         scene.activeCamera = camera
@@ -110,12 +111,20 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         panel.x = 200.0f
         panel.y = 200.0f
 
-        button = panel.createButton("Reset Slider")
+        button = panel.createButton("Reset Slider with some extra text")
+        textField = panel.createTextField("")
         slider = panel.createSlider(50, 0, 100)
         checkbox = panel.createCheckbox("Check Me!")
     }
 
     override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
+        if (textField.textEdited) {
+            button.string = textField.string
+        }
+        else if (slider.valueChanged) {
+            checkbox.checked = if (slider.value < 50) { true } else { false }
+        }
+
         val scale = Math.sin(buttonsAnimation.toDouble()).toFloat() * 7.0f
         when (selectedButton) {
             0 -> {
