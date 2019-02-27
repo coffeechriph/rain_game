@@ -1,8 +1,6 @@
 package roguelike
 
-import org.joml.Random
 import org.joml.Vector2f
-import org.lwjgl.system.MemoryUtil.memAlloc
 import rain.State
 import rain.StateManager
 import rain.api.Input
@@ -10,14 +8,12 @@ import rain.api.components.Animator
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.*
-import rain.api.gui.Container
-import rain.api.gui.Gui
-import rain.api.gui.Text
+import rain.api.gui.v2.GridLayout
+import rain.api.gui.v2.Label
+import rain.api.gui.v2.Panel
+import rain.api.gui.v2.guiManagerCreatePanel
 import rain.api.scene.Camera
 import rain.api.scene.Scene
-import rain.util.Earcut
-import rain.vulkan.DataType
-import rain.vulkan.VertexAttribute
 import roguelike.Entity.Attack
 import roguelike.Entity.HealthBar
 import roguelike.Entity.Inventory
@@ -48,15 +44,15 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private lateinit var healthBarSystem: EntitySystem<HealthBar>
     private lateinit var player: Player
     private lateinit var inventory: Inventory
-    private lateinit var container: Container
-    private lateinit var currentLevelText: Text
+    private lateinit var container: Panel
+    private lateinit var currentLevelText: Label
 
     // TODO: The depth range is aquired from the renderer
     // TODO: Create a method in scene to create a new camera which auto-injects the depth range
     private var camera = Camera(Vector2f(0.0f, 40.0f))
     private lateinit var level: Level
 
-    override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
+    override fun init(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
         val quadVertexBuffer = resourceFactory.buildVertexBuffer().as2dQuad()
         quadMesh = Mesh(quadVertexBuffer, null)
 
@@ -217,17 +213,24 @@ class GameState(stateManager: StateManager): State(stateManager) {
         player.getMoveComponent()!!.update(0.0f, 0.0f)
         level.switchCell(resourceFactory, player.cellX, player.cellY)
 
-        inventory = Inventory(gui, player)
+        inventory = Inventory(player)
         player.inventory = inventory
         player.level = level
 
         // TODO: Constant window dimensions
-        container = gui.newContainer(1280.0f/2.0f - 100, 768.0f - 40.0f, 200.0f, 40.0f)
-        currentLevelText = container.addText("Current Level: ${player.currentLevel}", 0.0f, 0.0f, background = true)
-        currentLevelText.x += currentLevelText.w/2.0f
+        container = guiManagerCreatePanel(GridLayout())
+        container.x = 1280.0f/2.0f - 100
+        container.y = 768.0f - 40.0f
+        container.w = 200.0f
+        container.h = 40.0f
+        currentLevelText = container.createLabel("Current Level: ${player.currentLevel}")
+        currentLevelText.x = 0.0f
+        currentLevelText.y = 0.0f
+        currentLevelText.background = true
+        currentLevelText.x = currentLevelText.w/2.0f
     }
 
-    override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
+    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input, deltaTime: Float) {
         if (player.health <= 0) {
             stateManager.startState("menu")
         }
@@ -250,9 +253,8 @@ class GameState(stateManager: StateManager): State(stateManager) {
             player.setPosition(level.getFirstTilePos())
             level.switchCell(resourceFactory, player.cellX, player.cellY)
 
-            container.removeText(currentLevelText)
-            currentLevelText = container.addText("Current Level: ${player.currentLevel}", 0.0f, 0.0f, background = true)
-            currentLevelText.x += currentLevelText.w/2.0f
+            currentLevelText.string = "Current Level: ${player.currentLevel}"
+            currentLevelText.x = currentLevelText.w/2.0f
         }
     }
 }

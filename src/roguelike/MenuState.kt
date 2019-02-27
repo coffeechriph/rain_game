@@ -11,19 +11,16 @@ import rain.api.gfx.Mesh
 import rain.api.gfx.ResourceFactory
 import rain.api.gfx.Texture2d
 import rain.api.gfx.TextureFilter
-import rain.api.gui.Container
-import rain.api.gui.Gui
-import rain.api.gui.ToggleButton
 import rain.api.gui.v2.*
 import rain.api.scene.Camera
 import rain.api.scene.Scene
 
 class MenuState(stateManager: StateManager): State(stateManager) {
     private var camera = Camera(Vector2f(0.0f, 40.0f))
-    private lateinit var menuContainer: Container
-    private lateinit var startGameButton: ToggleButton
-    private lateinit var settingsButton: ToggleButton
-    private lateinit var exitButton: ToggleButton
+    private lateinit var menuContainer: Panel
+    private lateinit var startGameButton: Button
+    private lateinit var settingsButton: Button
+    private lateinit var exitButton: Button
     private lateinit var bannerEntity: Entity
     private lateinit var bannerEntitySystem: EntitySystem<Entity>
     private lateinit var bannerTexture: Texture2d
@@ -31,43 +28,25 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
     private var buttonsAnimation = 0.0f
 
-    lateinit var button: Button
-    lateinit var slider: Slider
-    lateinit var checkbox: Checkbox
-    lateinit var textField: TextField
-
-    override fun init(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input) {
+    override fun init(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
         scene.activeCamera = camera
 
-        menuContainer = gui.newContainer(0.0f, 0.0f, 1280.0f, 768.0f)
-        menuContainer.skin.backgroundColors["button"] = Vector3f(143.0f / 255.0f, 114.0f / 255.0f, 73.0f / 255.0f)
-        menuContainer.skin.borderColors["button"] = Vector3f(143.0f / 255.0f * 0.5f, 114.0f / 255.0f * 0.5f, 73.0f / 255.0f * 0.5f)
-        menuContainer.skin.activeColors["button"] = Vector3f(143.0f / 255.0f * 1.25f, 114.0f / 255.0f * 1.25f, 73.0f / 255.0f * 1.25f)
-        menuContainer.skin.foregroundColors["text"] = Vector3f(240.0f / 255.0f, 207.0f / 255.0f, 117.0f / 255.0f)
+        menuContainer = guiManagerCreatePanel(FillRowLayout())
+        menuContainer.w = 200.0f
+        menuContainer.h = 180.0f
+        menuContainer.x = 1280.0f / 2.0f - 150.0f
+        menuContainer.y = 256.0f
+        menuContainer.moveable = true
+        menuContainer.resizable = true
 
-        startGameButton = ToggleButton()
-        startGameButton.x = 1280.0f / 2.0f - 70.0f
-        startGameButton.y = 310.0f
-        startGameButton.w = 200.0f
-        startGameButton.h = 60.0f
-        startGameButton.text = "New Game"
-        menuContainer.addComponent(startGameButton)
+//        menuContainer.skin.backgroundColors["button"] = Vector3f(143.0f / 255.0f, 114.0f / 255.0f, 73.0f / 255.0f)
+//        menuContainer.skin.borderColors["button"] = Vector3f(143.0f / 255.0f * 0.5f, 114.0f / 255.0f * 0.5f, 73.0f / 255.0f * 0.5f)
+//        menuContainer.skin.activeColors["button"] = Vector3f(143.0f / 255.0f * 1.25f, 114.0f / 255.0f * 1.25f, 73.0f / 255.0f * 1.25f)
+//        menuContainer.skin.foregroundColors["text"] = Vector3f(240.0f / 255.0f, 207.0f / 255.0f, 117.0f / 255.0f)
 
-        settingsButton = ToggleButton()
-        settingsButton.x = 1280.0f / 2.0f - 100.0f
-        settingsButton.y = 370.0f
-        settingsButton.w = 200.0f
-        settingsButton.h = 60.0f
-        settingsButton.text = "Settings"
-        menuContainer.addComponent(settingsButton)
-
-        exitButton= ToggleButton()
-        exitButton.x = 1280.0f / 2.0f - 100.0f
-        exitButton.y = 460.0f
-        exitButton.w = 200.0f
-        exitButton.h = 60.0f
-        exitButton.text = "Exit"
-        menuContainer.addComponent(exitButton)
+        startGameButton = menuContainer.createButton("New Game")
+        settingsButton = menuContainer.createButton("Settings")
+        exitButton = menuContainer.createButton("Exit")
 
         bannerTexture = resourceFactory.buildTexture2d()
                 .withName("bannerTexture")
@@ -101,91 +80,24 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         bannerTransform.x = 1280.0f / 2.0f
         bannerTransform.y = 128.0f
         bannerTransform.z = 1.0f
-
-        val gridLayout = FillRowLayout()
-        gridLayout.componentHeight = 30.0f
-        gridLayout.componentsPerRow = 2
-        val panel = guiManagerCreatePanel(gridLayout)
-        panel.w = 300.0f
-        panel.h = 300.0f
-        panel.x = 200.0f
-        panel.y = 200.0f
-
-        button = panel.createButton("Reset Slider with some extra text")
-        textField = panel.createTextField("")
-        slider = panel.createSlider(50, 0, 100)
-        checkbox = panel.createCheckbox("Check Me!")
     }
 
-    override fun update(resourceFactory: ResourceFactory, scene: Scene, gui: Gui, input: Input, deltaTime: Float) {
-        if (textField.textEdited) {
-            button.string = textField.string
-        }
-        else if (slider.valueChanged) {
-            checkbox.checked = if (slider.value < 50) { true } else { false }
-        }
-
-        val scale = Math.sin(buttonsAnimation.toDouble()).toFloat() * 7.0f
+    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input, deltaTime: Float) {
         when (selectedButton) {
             0 -> {
-                startGameButton.w = 200.0f + scale
-                startGameButton.h = 60.0f + scale
-                startGameButton.x = 1280.0f / 2.0f
-                startGameButton.y = 280.0f
-                startGameButton.outlineWidth = 4
                 startGameButton.active = true
                 settingsButton.active = false
                 exitButton.active = false
-
-                settingsButton.x = 1280.0f / 2.0f
-                settingsButton.y = 370.0f
-                settingsButton.w = 200.0f
-                settingsButton.h = 60.0f
-                settingsButton.outlineWidth = 4
-
-                exitButton.x = 1280.0f / 2.0f
-                exitButton.y = 460.0f
-                exitButton.w = 200.0f
-                exitButton.h = 60.0f
-                exitButton.outlineWidth = 4
             }
             1 -> {
-                settingsButton.w = 200.0f + scale
-                settingsButton.h = 60.0f + scale
-                settingsButton.x = 1280.0f / 2.0f
-                settingsButton.y = 370.0f
                 settingsButton.active = true
                 startGameButton.active = false
                 exitButton.active = false
-
-                startGameButton.x = 1280.0f / 2.0f
-                startGameButton.y = 280.0f
-                startGameButton.w = 200.0f
-                startGameButton.h = 60.0f
-
-                exitButton.x = 1280.0f / 2.0f
-                exitButton.y = 460.0f
-                exitButton.w = 200.0f
-                exitButton.h = 60.0f
             }
             2 -> {
-                exitButton.w = 200.0f + scale
-                exitButton.h = 60.0f + scale
-                exitButton.x = 1280.0f / 2.0f
-                exitButton.y = 460.0f
                 exitButton.active = true
                 startGameButton.active = false
                 settingsButton.active = false
-
-                startGameButton.x = 1280.0f / 2.0f
-                startGameButton.y = 280.0f
-                startGameButton.w = 200.0f
-                startGameButton.h = 60.0f
-
-                settingsButton.x = 1280.0f / 2.0f
-                settingsButton.y = 370.0f
-                settingsButton.w = 200.0f
-                settingsButton.h = 60.0f
             }
         }
 
@@ -193,7 +105,6 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         if (buttonsAnimation >= Math.PI*2) {
             buttonsAnimation = 0.0f
         }
-        menuContainer.isDirty = true
 
         if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
             when (selectedButton) {
