@@ -10,12 +10,11 @@ class Inventory(val player: Player) {
     var visible = false
         set(value) {
             field = value
-            panel.visible = visible
-            statPanel.visible = visible
+            panel.visible = value
+            statPanel.visible = value
         }
 
-    private val ItemNone = Item(player, ItemType.NONE, "Empty", 0, 0, 0, 0,
-            0, false, 0.0f)
+    private val ItemNone = Item(player, ItemType.NONE, "Empty", 0, 0, 0, 0, 0, false, 0.0f)
     var equippedWeapon: Item = ItemNone
     var equippedHead: Item = ItemNone
     var equippedGloves: Item = ItemNone

@@ -2,6 +2,7 @@ package roguelike
 
 import org.joml.Vector2f
 import org.joml.Vector3f
+import org.joml.Vector4f
 import rain.State
 import rain.StateManager
 import rain.api.Input
@@ -32,6 +33,10 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         scene.activeCamera = camera
 
         menuContainer = guiManagerCreatePanel(FillRowLayout())
+        menuContainer.skin.panelStyle.background = false
+        menuContainer.skin.buttonStyle.backgroundColor = Vector4f(0.094f, 0.196f, 0.318f, 1.0f)
+        menuContainer.skin.buttonStyle.outlineWidth = 1
+        menuContainer.skin.buttonStyle.outlineColor = Vector4f(0.194f, 0.296f, 0.418f, 1.0f)
         menuContainer.w = 200.0f
         menuContainer.h = 180.0f
         menuContainer.x = 1280.0f / 2.0f - 150.0f
