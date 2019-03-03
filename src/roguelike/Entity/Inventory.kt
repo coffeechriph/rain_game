@@ -61,6 +61,7 @@ class Inventory(val player: Player) {
         panelLayout.componentsPerRow = 1
 
         panel = guiManagerCreatePanel(panelLayout)
+        panel.skin.panelStyle.background = true
         panel.skin.labelStyle.textAlign = TextAlign.CENTER
         panel.skin.panelStyle.outlineWidth = 1
         panel.skin.panelStyle.outlineColor = Vector4f(0.094f, 0.196f, 0.318f, 1.0f)

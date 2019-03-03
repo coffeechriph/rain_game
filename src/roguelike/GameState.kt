@@ -8,10 +8,7 @@ import rain.api.components.Animator
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.*
-import rain.api.gui.v2.GridLayout
-import rain.api.gui.v2.Label
-import rain.api.gui.v2.Panel
-import rain.api.gui.v2.guiManagerCreatePanel
+import rain.api.gui.v2.*
 import rain.api.scene.Camera
 import rain.api.scene.Scene
 import roguelike.Entity.Attack
@@ -49,7 +46,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
     // TODO: The depth range is aquired from the renderer
     // TODO: Create a method in scene to create a new camera which auto-injects the depth range
-    private var camera = Camera(Vector2f(0.0f, 40.0f))
+    private var camera = Camera(1000.0f)
     private lateinit var level: Level
 
     override fun init(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
@@ -206,7 +203,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         scene.addTilemap(level.backTilemap)
         scene.addTilemap(level.frontTilemap)
 
-        camera = Camera(Vector2f(0.0f, 100.0f))
+        camera = Camera(1000.0f)
         scene.activeCamera = camera
 
         player.setPosition(level.getFirstTilePos())
@@ -218,7 +215,9 @@ class GameState(stateManager: StateManager): State(stateManager) {
         player.level = level
 
         // TODO: Constant window dimensions
-        container = guiManagerCreatePanel(GridLayout())
+        container = guiManagerCreatePanel(FillRowLayout())
+        container.moveable = false
+        container.resizable = false
         container.x = 1280.0f/2.0f - 100
         container.y = 768.0f - 40.0f
         container.w = 200.0f
@@ -226,7 +225,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         currentLevelText = container.createLabel("Current Level: ${player.currentLevel}")
         currentLevelText.x = 0.0f
         currentLevelText.y = 0.0f
-        currentLevelText.background = true
+        currentLevelText.background = false
         currentLevelText.x = currentLevelText.w/2.0f
     }
 
