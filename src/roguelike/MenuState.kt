@@ -33,7 +33,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         scene.activeCamera = camera
 
         val rowLayout = FillRowLayout()
-        rowLayout.componentHeight = 50.0f
+        rowLayout.componentHeight = 100.0f
         rowLayout.rowPadding = rowLayout.componentHeight
         menuContainer = guiManagerCreatePanel(rowLayout)
         menuContainer.skin.panelStyle.background = false
@@ -42,11 +42,20 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         menuContainer.skin.buttonStyle.outlineColor = Vector4f(0.194f, 0.296f, 0.418f, 1.0f)
         menuContainer.skin.buttonStyle.textAlign = TextAlign.CENTER
         menuContainer.w = 300.0f
-        menuContainer.h = 255.0f
+        menuContainer.h = 720.0f
         menuContainer.x = 1280.0f / 2.0f - 150.0f
-        menuContainer.y = 256.0f
+        menuContainer.y = 0.0f
         menuContainer.moveable = false
         menuContainer.resizable = false
+
+        val treeView = menuContainer.createTreeView("Tree View")
+        val item1 = treeView.addItem("Objects")
+        val subItem1 = item1.addItem("Solid")
+        subItem1.addItem("Crate")
+        subItem1.addItem("Rock")
+        subItem1.addItem("Tree")
+        treeView.addItem("Particles")
+        treeView.addItem("Liquid")
 
 //        menuContainer.skin.backgroundColors["button"] = Vector3f(143.0f / 255.0f, 114.0f / 255.0f, 73.0f / 255.0f)
 //        menuContainer.skin.borderColors["button"] = Vector3f(143.0f / 255.0f * 0.5f, 114.0f / 255.0f * 0.5f, 73.0f / 255.0f * 0.5f)
