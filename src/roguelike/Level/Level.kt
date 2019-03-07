@@ -3,18 +3,16 @@ package roguelike.Level
 import com.badlogic.gdx.physics.box2d.BodyDef
 import org.joml.*
 import org.lwjgl.BufferUtils
-import org.lwjgl.stb.STBImageWrite
 import org.lwjgl.system.MemoryUtil.memAlloc
+import org.lwjgl.stb.*
 import rain.api.Input
 import rain.api.components.Transform
-import rain.api.entity.DirectionType
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.*
 import rain.api.scene.*
 import rain.vulkan.VertexAttribute
 import roguelike.Entity.*
-import java.lang.IllegalStateException
 import java.lang.Math
 import java.nio.ByteBuffer
 import kotlin.math.sign
@@ -991,8 +989,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     fun build(seed: Long, scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
         random = Random(seed)
-        generate(random.nextInt(5) + 1)
-        addWallBlockersAtEdges()
+        map = IntArray(mapWidth*mapHeight){1}
         buildRooms()
 
         mapBackIndices = Array(mapWidth * mapHeight) { TileGfxNone }
@@ -1019,11 +1016,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         val pixelData = BufferUtils.createByteBuffer(mapWidth * mapHeight * 3)
         for (room in rooms) {
-            var R = 127.toByte()
-            var G = 127.toByte()
-            var B = 127.toByte()
+            var R = random.nextInt(127).toByte()
+            var G = random.nextInt(127).toByte()
+            var B = random.nextInt(127).toByte()
 
-            if (room.type == KRAC_BASE) {
+            /*if (room.type == KRAC_BASE) {
                 R = 0
                 G = 127
                 B = 0
@@ -1035,7 +1032,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 R = 127
                 G = 96
                 B = 96
-            }
+            }*/
 
             for (tile in room.tiles) {
                 pixelData.put((tile.x + tile.y * mapWidth) * 3, R)
@@ -1252,38 +1249,125 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     private fun buildRooms() {
         rooms.clear()
-        val mapCopy = map.copyOf()
+        val numRooms = random.nextInt(40) + 10
+        val maxW = mapWidth / 8
+        val maxH = mapHeight / 8
 
-        var x = 0
-        var y = 0
-        for (i in 0 until map.size) {
-            // Floor tile found - flood fill the room
-            if (mapCopy[i] == 0) {
-                val area = Vector4i(Int.MAX_VALUE, Int.MAX_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
-                val tiles = floodSearchRoom(x,y,area,mapCopy,ArrayList(), 0)
-                val room = Room(tiles, area, RoomTypes[random.nextInt(RoomTypes.size)])
-                rooms.add(room)
+        val roomAreaList = ArrayList<Vector4i>()
+        for (i in 0 until numRooms) {
+            var roomX = random.nextInt(mapWidth)
+            var roomY = random.nextInt(mapHeight)
+            val roomW = random.nextInt(maxW) + 10
+            val roomH = random.nextInt(maxH) + 10
+
+            if (roomX + roomW >= mapWidth) {
+                roomX = mapWidth - roomW - 1
+            }
+            if (roomY + roomH >= mapHeight) {
+                roomY = mapHeight - roomH - 1
             }
 
-            x += 1
-            if (x >= mapWidth) {
-                x = 0
-                y += 1
+            roomAreaList.add(Vector4i(roomX, roomY,roomW,roomH))
+        }
+
+        var collision: Boolean
+        var iterationsCount = 0
+        do {
+            collision = false
+            for (area in roomAreaList) {
+                for (other in roomAreaList) {
+                    if (area != other) {
+                        if (area.x + area.z >= other.x && area.x <= other.x + other.z
+                        && area.y + area.w >= other.y && area.y <= other.y + other.w) {
+                            collision = true
+                            var dx = ((area.x+area.z/2) - (other.x+other.z/2)).sign
+                            var dy = ((area.y+area.w/2) - (other.y+other.w/2)).sign
+
+                            if (dx == 0 && dy == 0) {
+                                dx = -1
+                                dy = -1
+                            }
+
+                            if (area.x + dx in 0..(mapWidth - 1 - area.z)) {
+                                area.x += dx
+                            }
+
+                            if (area.y + dy in 0..(mapHeight - 1 - area.w)) {
+                                area.y += dy
+                            }
+
+                            if (other.x - dx in 0..(mapWidth - 1 - other.z)) {
+                                other.x -= dx
+                            }
+
+                            if (other.y - dy in 0..(mapHeight - 1 - other.w)) {
+                                other.y -= dy
+                            }
+                        }
+                    }
+                }
+            }
+            iterationsCount++
+
+            // If we arn't finished after 100 rounds - we should break
+            if (iterationsCount >= 100) {
+                break
+            }
+
+        } while (collision)
+
+        // If any rooms are still colliding at this point we want to remove them
+        val toRemove = ArrayList<Vector4i>()
+        for (area in roomAreaList) {
+            for (other in roomAreaList) {
+                if (area != other) {
+                    if (area.x + area.z >= other.x && area.x <= other.x + other.z
+                        && area.y + area.w >= other.y && area.y <= other.y + other.w
+                    ) {
+                        if (area.z*area.w < other.z*other.w) {
+                            toRemove.add(area)
+                        }
+                        else {
+                            toRemove.add(other)
+                        }
+                    }
+                }
             }
         }
 
-        removeTinyRooms()
+        for (area in toRemove) {
+            roomAreaList.remove(area)
+        }
+
+        for (area in roomAreaList) {
+            val tiles = ArrayList<Vector2i>()
+            var x = area.x
+            var y = area.y
+            for (i in 0 until area.z*area.w) {
+                tiles.add(Vector2i(x, y))
+                map[x + y * mapWidth] = 0
+                x += 1
+                if (x >= area.x + area.z) {
+                    x = area.x
+                    y += 1
+                }
+            }
+
+            val room = Room(tiles, area, DIRT_ROOM)
+            rooms.add(room)
+        }
+
         findNearestNeighbourOfRooms()
         connectRooms()
     }
 
     private fun findNearestNeighbourOfRooms() {
         for (room in rooms) {
-            while (room.neighbourRooms.size < 4) {
+            while (room.neighbourRooms.size < 2) {
                 var nearestRoom: Room? = null
                 var shortestDist = Double.MAX_VALUE
                 for (otherRoom in rooms) {
-                    if (otherRoom == room || room.neighbourRooms.contains(otherRoom)) {
+                    if (otherRoom == room || room.neighbourRooms.contains(otherRoom) || otherRoom.neighbourRooms.contains(room)) {
                         continue
                     }
 
@@ -1296,32 +1380,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
                 if (nearestRoom != null) {
                     room.neighbourRooms.add(nearestRoom)
-                    nearestRoom.neighbourRooms.add(room)
                 }
                 else {
                     break
                 }
             }
-        }
-    }
-
-    private fun removeTinyRooms() {
-        var k = 0
-        for (i in 0 until rooms.size) {
-            if (k >= rooms.size) {
-                break
-            }
-            if (rooms[k].tiles.size < 50) {
-                for (tiles in rooms[k].tiles) {
-                    map[tiles.x + tiles.y * mapWidth] = 1
-                }
-                rooms.removeAt(k)
-                if (k > 0) {
-                    k -= 1
-                }
-            }
-
-            k += 1
         }
     }
 
@@ -1368,188 +1431,58 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 // rooms
                 while (true) {
                     var traversalDone = 0
-                    var collisions = 0
 
                     if (map[x + y * mapWidth] == 1) {
                         map[x + y * mapWidth] = 0
                         room.tiles.add(Vector2i(x,y))
                     }
-                    else {
-                        collisions++
-                    }
-
-                    if (x > 0) {
-                        if (map[(x - 1) + y * mapWidth] == 1) {
-                            map[(x - 1) + y * mapWidth] = 0
-                            room.tiles.add(Vector2i(x - 1, y))
-                        }
-                        else {
-                            collisions++
-                        }
-
-                        if (y > 0) {
-                            if (map[(x - 1) + (y - 1) * mapWidth] == 1) {
-                                map[(x - 1) + (y - 1) * mapWidth] = 0
-                                room.tiles.add(Vector2i(x - 1, y - 1))
-                            }
-                            else {
-                                collisions++
-                            }
-                        }
-
-                        if (y < mapHeight - 1) {
-                            if (map[(x - 1) + (y + 1) * mapWidth] == 1) {
-                                map[(x - 1) + (y + 1) * mapWidth] = 0
-                                room.tiles.add(Vector2i(x - 1, y + 1))
-                            }
-                            else {
-                                collisions++
-                            }
-                        }
-                    }
-
-                    if (x < mapWidth - 1) {
-                        if (map[(x + 1) + y * mapWidth] == 1) {
-                            map[(x + 1) + y * mapWidth] = 0
-                            room.tiles.add(Vector2i(x + 1, y))
-                        }
-                        else {
-                            collisions++
-                        }
-
-
-                        if (y > 0) {
-                            if (map[(x + 1) + (y - 1) * mapWidth] == 1) {
-                                map[(x + 1) + (y - 1) * mapWidth] = 0
-                                room.tiles.add(Vector2i(x + 1, y - 1))
-                            }
-                            else {
-                                collisions++
-                            }
-                        }
-
-                        if (y < mapHeight - 1) {
-                            if (map[(x + 1) + (y + 1) * mapWidth] == 1) {
-                                map[(x + 1) + (y + 1) * mapWidth] = 0
-                                room.tiles.add(Vector2i(x + 1, y + 1))
-                            }
-                            else {
-                                collisions++
-                            }
-                        }
-                    }
-
-                    if (y > 0) {
-                        if (map[x + (y - 1) * mapWidth] == 1) {
-                            map[x + (y - 1) * mapWidth] = 0
-                            room.tiles.add(Vector2i(x, y - 1))
-                        }
-                        else {
-                            collisions++
-                        }
-                    }
-
-                    if (y < mapHeight - 1) {
-                        if (map[x + (y + 1) * mapWidth] == 1) {
-                            map[x + (y + 1) * mapWidth] = 0
-                            room.tiles.add(Vector2i(x, y + 1))
-                        }
-                        else {
-                            collisions++
-                        }
-                    }
 
                     if (x != secondTile.x) {
+                        if (y > 0) {
+                            if (map[x + (y - 1) * mapWidth] == 1) {
+                                map[x + (y - 1) * mapWidth] = 0
+                                room.tiles.add(Vector2i(x, y - 1))
+                            }
+                        }
+
+                        if (y < mapHeight - 1) {
+                            if (map[x + (y + 1) * mapWidth] == 1) {
+                                map[x + (y + 1) * mapWidth] = 0
+                                room.tiles.add(Vector2i(x, y + 1))
+                            }
+                        }
                         x += dx
                     }
                     else {
+                        if (x > 0) {
+                            if (map[(x - 1) + y * mapWidth] == 1) {
+                                map[(x - 1) + y * mapWidth] = 0
+                                room.tiles.add(Vector2i(x - 1, y))
+                            }
+                        }
+
+                        if (x < mapWidth - 1) {
+                            if (map[(x + 1) + y * mapWidth] == 1) {
+                                map[(x + 1) + y * mapWidth] = 0
+                                room.tiles.add(Vector2i(x + 1, y))
+                            }
+                        }
+
                         traversalDone += 1
+                        if (y != secondTile.y) {
+                            y += dy
+                        }
+                        else {
+                            traversalDone += 1
+                        }
                     }
 
-                    if (y != secondTile.y) {
-                        y += dy
-                    }
-                    else {
-                        traversalDone += 1
-                    }
-
-                    if (traversalDone == 2 || collisions > 7) {
+                    if (traversalDone == 2) {
                         break
                     }
                 }
             }
         }
-    }
-
-    private fun floodSearchRoom(x: Int, y: Int, area: Vector4i, mapCopy: IntArray, tiles: MutableList<Vector2i>, depth: Int): MutableList<Vector2i> {
-        if (x < area.x) {
-            area.x = x
-        }
-        if (y < area.y) {
-            area.y = y
-        }
-        if (x > area.z) {
-            area.z = x
-        }
-        if (y > area.w) {
-            area.w = y
-        }
-
-        tiles.add(Vector2i(x, y))
-        mapCopy[x + y*mapWidth] = 1
-        if (depth > 20) {
-            return tiles
-        }
-
-        if (x > 0) {
-            if (mapCopy[(x-1) + y*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x-1, y, area, mapCopy, ArrayList(), depth+1))
-            }
-
-            if (y > 0) {
-                if (mapCopy[(x-1) + (y-1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x-1, y-1, area, mapCopy, ArrayList(), depth+1))
-                }
-            }
-
-            if (y < mapHeight - 1) {
-                if (mapCopy[(x-1) + (y+1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x-1, y+1, area, mapCopy, ArrayList(), depth+1))
-                }
-            }
-        }
-
-        if (y > 0) {
-            if (mapCopy[x + (y-1)*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x, y-1, area, mapCopy, ArrayList(), depth+1))
-            }
-        }
-
-        if (x < mapWidth - 1) {
-            if (mapCopy[(x+1) + y*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x+1, y, area, mapCopy, ArrayList(), depth+1))
-            }
-
-            if (y > 0) {
-                if (mapCopy[(x+1) + (y-1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x+1, y-1, area, mapCopy, ArrayList(), depth+1))
-                }
-            }
-
-            if (y < mapHeight - 1) {
-                if (mapCopy[(x+1) + (y+1)*mapWidth] == 0) {
-                    tiles.addAll(floodSearchRoom(x+1, y+1, area, mapCopy, ArrayList(), depth+1))
-                }
-            }
-        }
-
-        if (y < mapHeight - 1) {
-            if (mapCopy[x + (y+1)*mapWidth] == 0) {
-                tiles.addAll(floodSearchRoom(x, y+1, area, mapCopy, ArrayList(), depth+1))
-            }
-        }
-
-        return tiles
     }
 
     private fun generateRooms(scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
