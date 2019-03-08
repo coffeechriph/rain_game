@@ -36,12 +36,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         private set
     var frontTilemap = Tilemap()
         private set
-    private lateinit var lightMap: VertexBuffer
-    private lateinit var lightVertices: FloatArray
-    private lateinit var lightVerticesBuffer: ByteBuffer
-    private lateinit var lightValues: Array<Vector4f>
-    private lateinit var lightMapMaterial: Material
 
+    private lateinit var lightValues: Array<Vector4f>
     private lateinit var tilemapMaterial: Material
     private lateinit var itemMaterial: Material
     private lateinit var texture: Texture2d
@@ -505,30 +501,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 .build()
         torchSystem = scene.newSystem(torchMaterial)
 
-        lightVertices = FloatArray(width*height*6*6){0.0f}
-        lightVerticesBuffer = memAlloc(lightVertices.size*4)
         lightValues = Array(width*height){Vector4f()}
-        lightMap = resourceFactory.buildVertexBuffer()
-                .withVertices(lightVerticesBuffer)
-                .withState(VertexBufferState.DYNAMIC)
-                .withAttribute(VertexAttribute(0, 2))
-                .withAttribute(VertexAttribute(1, 4))
-                .build()
-
-        lightMapMaterial = resourceFactory.buildMaterial()
-                .withName("lightMapMaterial")
-                .withVertexShader("./data/shaders/light.vert.spv")
-                .withFragmentShader("./data/shaders/light.frag.spv")
-                .withTexture(torchTexture)
-                .withDepthWrite(true)
-                .withBlendEnabled(true)
-                .withSrcColor(BlendMode.BLEND_FACTOR_DST_COLOR)
-                .withDstColor(BlendMode.BLEND_FACTOR_ZERO)
-                .build()
-
-        val lightTransform = Transform()
-        lightTransform.z = 17.0f
-        //scene.addSimpleDraw(SimpleDraw(lightTransform, lightMap, lightMapMaterial))
 
         enemyTargetSystem = scene.newSystem(itemMaterial)
         enemyTargetEntity = Entity()
@@ -750,63 +723,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         var iy = 0
         var index = 0
         for (i in 0 until lightValues.size) {
-            val top = if (iy > 0) { lightValues[ix + (iy-1)*width] } else { lightValues[i] }
-            val bot = if (iy < height-1) { lightValues[ix + (iy+1)*width] } else { lightValues[i] }
-
-            val topleft = if (ix > 0 && iy > 0) { lightValues[(ix-1) + (iy-1)*width] } else { lightValues[i] }
-            val left = if (ix > 0) { lightValues[(ix-1) + iy*width] } else { lightValues[i] }
-            val botleft = if (ix > 0 && iy < height-1) { lightValues[(ix-1) + (iy+1)*width]} else { lightValues[i] }
-
-            val topRight = if (ix < width-1 && iy > 0) { lightValues[(ix+1) + (iy-1)*width]} else { lightValues[i] }
-            val right = if (ix < width-1) { lightValues[(ix+1) + iy*width] } else { lightValues[i] }
-            val botRight = if (ix < width-1 && iy < height-1) { lightValues[(ix+1) + (iy+1)*width] } else { lightValues[i] }
-
             backIndices[ix + iy * width].red = (lightValues[i].x)
             backIndices[ix + iy * width].green = (lightValues[i].y)
             backIndices[ix + iy * width].blue = (lightValues[i].z)
             backIndices[ix + iy * width].alpha = (lightValues[i].w)
-
-            lightVertices[index] = x
-            lightVertices[index+1] = y
-            lightVertices[index+2] = (lightValues[i].x+topleft.x+left.x+top.x)*0.25f
-            lightVertices[index+3] = (lightValues[i].y+topleft.y+left.y+top.y)*0.25f
-            lightVertices[index+4] = (lightValues[i].z+topleft.z+left.z+top.z)*0.25f
-            lightVertices[index+5] = (lightValues[i].w+topleft.w+left.w+top.w)*0.25f
-
-            lightVertices[index+6] = x
-            lightVertices[index+7] = y+64.0f
-            lightVertices[index+8] = (lightValues[i].x+botleft.x+left.x+bot.x)*0.25f
-            lightVertices[index+9] = (lightValues[i].y+botleft.y+left.y+bot.y)*0.25f
-            lightVertices[index+10] = (lightValues[i].z+botleft.z+left.z+bot.z)*0.25f
-            lightVertices[index+11] = (lightValues[i].w+botleft.w+left.w+bot.w)*0.25f
-
-            lightVertices[index+12] = x+64.0f
-            lightVertices[index+13] = y+64.0f
-            lightVertices[index+14] = (lightValues[i].x+botRight.x+right.x+bot.x)*0.25f
-            lightVertices[index+15] = (lightValues[i].y+botRight.y+right.y+bot.y)*0.25f
-            lightVertices[index+16] = (lightValues[i].z+botRight.z+right.z+bot.z)*0.25f
-            lightVertices[index+17] = (lightValues[i].w+botRight.w+right.w+bot.w)*0.25f
-
-            lightVertices[index+18] = x+64.0f
-            lightVertices[index+19] = y+64.0f
-            lightVertices[index+20] = (lightValues[i].x+botRight.x+right.x+bot.x)*0.25f
-            lightVertices[index+21] = (lightValues[i].y+botRight.y+right.y+bot.y)*0.25f
-            lightVertices[index+22] = (lightValues[i].z+botRight.z+right.z+bot.z)*0.25f
-            lightVertices[index+23] = (lightValues[i].w+botRight.w+right.w+bot.w)*0.25f
-
-            lightVertices[index+24] = x+64.0f
-            lightVertices[index+25] = y
-            lightVertices[index+26] = (lightValues[i].x+topRight.x+right.x+top.x)*0.25f
-            lightVertices[index+27] = (lightValues[i].y+topRight.y+right.y+top.y)*0.25f
-            lightVertices[index+28] = (lightValues[i].z+topRight.z+right.z+top.z)*0.25f
-            lightVertices[index+29] = (lightValues[i].w+topRight.w+right.w+top.w)*0.25f
-
-            lightVertices[index+30] = x
-            lightVertices[index+31] = y
-            lightVertices[index+32] = (lightValues[i].x+topleft.x+left.x+top.x)*0.25f
-            lightVertices[index+33] = (lightValues[i].y+topleft.y+left.y+top.y)*0.25f
-            lightVertices[index+34] = (lightValues[i].z+topleft.z+left.z+top.z)*0.25f
-            lightVertices[index+35] = (lightValues[i].w+topleft.w+left.w+top.w)*0.25f
 
             index += 36
             x += 64.0f
@@ -821,9 +741,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 iy += 1
             }
         }
-
-        lightVerticesBuffer.asFloatBuffer().put(lightVertices).flip()
-        lightMap.update(lightVerticesBuffer)
     }
 
     private fun spreadLight(x: Int, y: Int, value: Vector4f) {
