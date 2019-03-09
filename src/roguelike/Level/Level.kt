@@ -937,7 +937,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             var G = random.nextInt(127).toByte()
             var B = random.nextInt(127).toByte()
 
-            /*if (room.type == KRAC_BASE) {
+            if (room.type == KRAC_BASE) {
                 R = 0
                 G = 127
                 B = 0
@@ -949,7 +949,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 R = 127
                 G = 96
                 B = 96
-            }*/
+            }
 
             for (tile in room.tiles) {
                 pixelData.put((tile.x + tile.y * mapWidth) * 3, R)
@@ -977,28 +977,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         STBImageWrite.stbi_write_png("levels/level.png", mapWidth, mapHeight, 3, pixelData, mapWidth * 3)
     }
 
-    private fun addWallBlockersAtEdges() {
-        var x = 0
-        var y = 0
-        for (i in 0 until map.size) {
-            if (x > 0 && x < mapWidth-1 && (x%width) == 0 && map[x + y*mapWidth] == 1) {
-                map[(x-1)+y*mapWidth] = 1
-                map[(x+1)+y*mapWidth] = 1
-            }
-
-            if (y > 0 && y < mapHeight-1 && (y%height) == 0 && map[x + y*mapWidth] == 1) {
-                map[x+(y-1)*mapWidth] = 1
-                map[x+(y+1)*mapWidth] = 1
-            }
-
-            x += 1
-            if (x >= mapWidth) {
-                x = 0
-                y += 1
-            }
-        }
-    }
-
     private fun populateTilemap() {
         for (room in rooms) {
             val tileY = when (room.type) {
@@ -1010,7 +988,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (tile in room.tiles) {
                 val index = tile.x + tile.y * mapWidth
-                mapBackIndices[index] = TileGfx(0, tileY)
+                if (random.nextFloat() <= 0.1f) {
+                    mapBackIndices[index] = TileGfx(7, tileY)
+                }
+                else {
+                    mapBackIndices[index] = TileGfx(0, tileY)
+                }
 
                 if (tile.y > 0) {
                     if (map[tile.x + (tile.y-1)*mapWidth] == 1) {
@@ -1044,6 +1027,52 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     mapBackIndices[tile.x + tile.y * mapWidth] = TileGfx(random.nextInt(3) + 4, tileY)
                 }
             }
+
+            // Second pass to add smooth tiles around other tiles
+            for (tile in room.tiles) {
+                val index = tile.x + tile.y * mapWidth
+                if (mapBackIndices[index] == TileGfx(7,tileY)) {
+                    if (tile.x > 0) {
+                        mapBackIndices[(tile.x-1) + tile.y*mapWidth] = TileGfx(6, 4)
+
+                        if (tile.y > 0) {
+                            // Add corner water tile only if there isn't another water tile above
+                            if (mapBackIndices[tile.x + (tile.y-1)*mapWidth] != TileGfx(7, tileY)) {
+                                mapBackIndices[(tile.x - 1) + (tile.y - 1) * mapWidth] = TileGfx(6, 3)
+                            }
+                            else {
+                                mapBackIndices[(tile.x - 1) + (tile.y - 1) * mapWidth] = TileGfx(6, 4)
+                            }
+                        }
+
+
+                        if (tile.y < mapHeight) {
+                            mapBackIndices[(tile.x-1) + (tile.y+1)*mapWidth] = TileGfx(6, 5)
+                        }
+                    }
+
+                    if (tile.x < mapWidth) {
+                        mapBackIndices[(tile.x+1) + tile.y*mapWidth] = TileGfx(8, 4)
+
+                        if (tile.y > 0) {
+                            mapBackIndices[(tile.x+1) + (tile.y-1)*mapWidth] = TileGfx(8, 3)
+                        }
+
+
+                        if (tile.y < mapHeight) {
+                            mapBackIndices[(tile.x+1) + (tile.y+1)*mapWidth] = TileGfx(8, 5)
+                        }
+                    }
+
+                    if (tile.y > 0) {
+                        mapBackIndices[tile.x + (tile.y-1)*mapWidth] = TileGfx(7, 3)
+                    }
+
+                    if (tile.y < mapHeight) {
+                        mapBackIndices[tile.x + (tile.y+1)*mapWidth] = TileGfx(7, 5)
+                    }
+                }
+            }
         }
 
         // Remove tiles that are now solid
@@ -1058,55 +1087,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
             for (tile in tilesToRemove) {
                 room.tiles.remove(tile)
-            }
-        }
-    }
-
-    private fun generate(repeats: Int) {
-        var x = 0
-        var y = 0
-        for (i in 0 until map.size) {
-            map[i] = random.nextInt(2)
-
-            x += 1
-            if (x >= mapWidth) {
-                x = 0
-                y += 1
-            }
-        }
-
-        repeat(repeats) {
-            var x1 = 0
-            var y1 = 0
-            for (i in 0 until map.size) {
-                val c = numNeighbours(x1,y1)
-
-                if (map[x1 + y1 * mapWidth] == 0 && c < 4) {
-                    map[x1 + y1 * mapWidth] = 1
-                }
-                else if (map[x1 + y1 * mapWidth] == 1 && c >= 5) {
-                    map[x1 + y1 * mapWidth] = 0
-                }
-
-                x1 += 1
-                if (x1 >= mapWidth) {
-                    x1 = 0
-                    y1 += 1
-                }
-            }
-        }
-
-        x = 0
-        y = 0
-        for (i in 0 until map.size) {
-            if (x == 0 || x == mapWidth-1 || y == 0 || y == mapHeight-1) {
-                map[x + y*mapWidth] = 1
-            }
-
-            x += 1
-            if (x >= mapWidth) {
-                x = 0
-                y += 1
             }
         }
     }
@@ -1270,7 +1250,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 }
             }
 
-            val room = Room(tiles, area, DIRT_ROOM)
+            val roomType = DIRT_ROOM//RoomTypes[random.nextInt(RoomTypes.size)]
+            val room = Room(tiles, area, roomType)
             rooms.add(room)
         }
 
