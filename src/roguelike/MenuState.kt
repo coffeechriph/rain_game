@@ -1,7 +1,6 @@
 package roguelike
 
-import org.joml.Vector2f
-import org.joml.Vector3f
+import org.joml.Vector2i
 import org.joml.Vector4f
 import rain.State
 import rain.StateManager
@@ -17,7 +16,7 @@ import rain.api.scene.Camera
 import rain.api.scene.Scene
 
 class MenuState(stateManager: StateManager): State(stateManager) {
-    private var camera = Camera(1000.0f)
+    private var camera = Camera(1000.0f, Vector2i(1280, 768))
     private lateinit var menuContainer: Panel
     private lateinit var startGameButton: Button
     private lateinit var settingsButton: Button

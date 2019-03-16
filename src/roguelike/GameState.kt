@@ -1,6 +1,7 @@
 package roguelike
 
 import org.joml.Vector2f
+import org.joml.Vector2i
 import rain.State
 import rain.StateManager
 import rain.api.Input
@@ -46,7 +47,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
     // TODO: The depth range is aquired from the renderer
     // TODO: Create a method in scene to create a new camera which auto-injects the depth range
-    private var camera = Camera(1000.0f)
+    private var camera = Camera(1000.0f, Vector2i(1280, 768))
     private lateinit var level: Level
 
     override fun init(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
@@ -203,7 +204,6 @@ class GameState(stateManager: StateManager): State(stateManager) {
         scene.addTilemap(level.backTilemap)
         scene.addTilemap(level.frontTilemap)
 
-        camera = Camera(1000.0f)
         scene.activeCamera = camera
 
         player.setPosition(level.getFirstTilePos())
