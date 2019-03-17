@@ -1027,52 +1027,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     mapBackIndices[tile.x + tile.y * mapWidth] = TileGfx(random.nextInt(3) + 4, tileY)
                 }
             }
-
-            // Second pass to add smooth tiles around other tiles
-            for (tile in room.tiles) {
-                val index = tile.x + tile.y * mapWidth
-                if (mapBackIndices[index] == TileGfx(7,tileY)) {
-                    if (tile.x > 0) {
-                        mapBackIndices[(tile.x-1) + tile.y*mapWidth] = TileGfx(6, 4)
-
-                        if (tile.y > 0) {
-                            // Add corner water tile only if there isn't another water tile above
-                            if (mapBackIndices[tile.x + (tile.y-1)*mapWidth] != TileGfx(7, tileY)) {
-                                mapBackIndices[(tile.x - 1) + (tile.y - 1) * mapWidth] = TileGfx(6, 3)
-                            }
-                            else {
-                                mapBackIndices[(tile.x - 1) + (tile.y - 1) * mapWidth] = TileGfx(6, 4)
-                            }
-                        }
-
-
-                        if (tile.y < mapHeight) {
-                            mapBackIndices[(tile.x-1) + (tile.y+1)*mapWidth] = TileGfx(6, 5)
-                        }
-                    }
-
-                    if (tile.x < mapWidth) {
-                        mapBackIndices[(tile.x+1) + tile.y*mapWidth] = TileGfx(8, 4)
-
-                        if (tile.y > 0) {
-                            mapBackIndices[(tile.x+1) + (tile.y-1)*mapWidth] = TileGfx(8, 3)
-                        }
-
-
-                        if (tile.y < mapHeight) {
-                            mapBackIndices[(tile.x+1) + (tile.y+1)*mapWidth] = TileGfx(8, 5)
-                        }
-                    }
-
-                    if (tile.y > 0) {
-                        mapBackIndices[tile.x + (tile.y-1)*mapWidth] = TileGfx(7, 3)
-                    }
-
-                    if (tile.y < mapHeight) {
-                        mapBackIndices[tile.x + (tile.y+1)*mapWidth] = TileGfx(7, 5)
-                    }
-                }
-            }
         }
 
         // Remove tiles that are now solid
