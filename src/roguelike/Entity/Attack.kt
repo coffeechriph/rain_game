@@ -38,7 +38,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
         getRenderComponents()[0].addCustomUniformData(0, 1.0f)
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
         val animator = getAnimatorComponent()[0]
 
         if (active) {

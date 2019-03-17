@@ -12,7 +12,7 @@ class HealthBar: Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
         val transform = transform!!
         transform.z = 11.0f
 

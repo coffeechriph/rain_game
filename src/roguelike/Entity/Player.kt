@@ -223,7 +223,7 @@ class Player : Entity() {
         bootsArmor.getRenderComponents()[0].visible = false
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
         val chestTransform = chestArmor.transform
         val legsTransform = legsArmor.transform
         val handsTransform = handsArmor.transform

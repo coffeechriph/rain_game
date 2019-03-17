@@ -156,7 +156,7 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
         animator = getAnimatorComponent()!![0]
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
         if (health <= 0) {
             attacking = false
         }

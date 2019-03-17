@@ -99,7 +99,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         return false
     }
 
-    fun update(deltaTime: Float, input: Input) {
+    fun update(input: Input) {
         val lc = lightIntensityAt(player.transform.x, player.transform.y)
         player.getRenderComponents()[0].addCustomUniformData(0, lc)
         player.bootsArmor.getRenderComponents()[0].addCustomUniformData(1, lc)

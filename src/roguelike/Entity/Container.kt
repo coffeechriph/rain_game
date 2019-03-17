@@ -27,7 +27,7 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
         if (open) {
             getRenderComponents()[0].textureTileOffset = Vector2i(1,containerType+12)
         }

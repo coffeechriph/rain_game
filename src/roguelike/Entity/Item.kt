@@ -77,7 +77,7 @@ class Item (val player: Player,
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>, deltaTime: Float) {
+    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
         if (getRenderComponents()[0].visible) {
             time += 1.0f / 60.0f
             val transform = transform

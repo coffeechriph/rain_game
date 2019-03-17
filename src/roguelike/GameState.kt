@@ -50,7 +50,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private var camera = Camera(1000.0f, Vector2i(1280, 768))
     private lateinit var level: Level
 
-    override fun init(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
+    override fun init(resourceFactory: ResourceFactory, scene: Scene) {
         val quadVertexBuffer = resourceFactory.buildVertexBuffer().as2dQuad()
         quadMesh = Mesh(quadVertexBuffer, null)
 
@@ -229,7 +229,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         currentLevelText.x = currentLevelText.w/2.0f
     }
 
-    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input, deltaTime: Float) {
+    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
         if (player.health <= 0) {
             stateManager.startState("menu")
         }
@@ -239,7 +239,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
             player.playerMovedCell = false
         }
 
-        level.update(deltaTime, input)
+        level.update(input)
 
         if (inventory.visible) {
             inventory.update(input)

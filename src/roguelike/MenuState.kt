@@ -28,7 +28,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
 
     private var buttonsAnimation = 0.0f
 
-    override fun init(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
+    override fun init(resourceFactory: ResourceFactory, scene: Scene) {
         scene.activeCamera = camera
 
         val rowLayout = FillRowLayout()
@@ -90,7 +90,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         bannerTransform.z = 1.0f
     }
 
-    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input, deltaTime: Float) {
+    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
         when (selectedButton) {
             0 -> {
                 startGameButton.active = true
