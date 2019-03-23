@@ -32,9 +32,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         private set
     var maxCellY = 0
         private set
-    var backTilemap = Tilemap()
+    lateinit var backTilemap: Tilemap
         private set
-    var frontTilemap = Tilemap()
+    lateinit var frontTilemap: Tilemap
         private set
 
     private lateinit var lightValues: Array<Vector4f>
@@ -46,8 +46,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var torchSystem: EntitySystem<LightSource>
     private var firstBuild = true
 
-    private var mapBackIndices = Array(0){ TileGfxNone }
-    private var mapFrontIndices = Array(0){ TileGfxNone }
+    private var mapBackIndices = Array(0){ -1.0f }
+    private var mapFrontIndices = Array(0){ -1.0f }
     private var rooms = ArrayList<Room>()
     private lateinit var random: Random
     private lateinit var enemySystem: EntitySystem<Enemy>
@@ -515,7 +515,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         enemyTargetEntityRenderer.addCustomUniformData(0, 1.0f)
     }
 
-    fun switchCell(resourceFactory: ResourceFactory, cellX: Int, cellY: Int) {
+    fun switchCell(resourceFactory: ResourceFactory, scene: Scene, cellX: Int, cellY: Int) {
         for (enemy in activeEnemies) {
             enemy.getRenderComponents()[0].visible = false
             enemy.healthBar.getRenderComponents()[0].visible = false
@@ -582,8 +582,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
         }
 
-        val backIndices = Array(width*height){ TileGfxNone }
-        val frontIndices = Array(width*height){ TileGfxNone }
+        val backIndices = Array(width*height*8){ -1.0f }
+        val frontIndices = Array(width*height*8){ -1.0f }
         var sx = cellX * width
         var sy = cellY * height
 
@@ -641,36 +641,130 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         if (firstBuild) {
-            backTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, backIndices)
-            frontTilemap.create(resourceFactory, tilemapMaterial, width, height, 64.0f, 64.0f, frontIndices)
-            backTilemap.update(backIndices)
-            frontTilemap.update(frontIndices)
+            backTilemap = scene.createTilemap(tilemapMaterial, width, height, 64.0f, 64.0f)
+            frontTilemap = scene.createTilemap(tilemapMaterial, width, height, 64.0f, 64.0f)
+            var tx = 0
+            var ty = 0
+            backTilemap.clearTiles()
+            for (i in 0 until backIndices.size step 8) {
+                if (backIndices[i+2] >= 0.0f) {
+                    backTilemap.setTile(
+                        tx,
+                        ty,
+                        backIndices[i + 2].toInt(),
+                        backIndices[i + 3].toInt(),
+                        backIndices[i + 4],
+                        backIndices[i + 5],
+                        backIndices[i + 6],
+                        backIndices[i + 7]
+                    )
+                }
+
+                tx += 1
+                if (tx >= width) {
+                    tx = 0
+                    ty += 1
+                }
+            }
+
+            tx = 0
+            ty = 0
+            frontTilemap.clearTiles()
+            for (i in 0 until frontIndices.size step 8) {
+                if (frontIndices[i+2] >= 0.0f) {
+                    frontTilemap.setTile(
+                        tx,
+                        ty,
+                        frontIndices[i + 2].toInt(),
+                        frontIndices[i + 3].toInt(),
+                        frontIndices[i + 4],
+                        frontIndices[i + 5],
+                        frontIndices[i + 6],
+                        frontIndices[i + 7]
+                    )
+                }
+
+                tx += 1
+                if (tx >= width) {
+                    tx = 0
+                    ty += 1
+                }
+            }
+
             backTilemap.transform.setPosition(0.0f, 0.0f, 1.0f)
             frontTilemap.transform.setPosition(0.0f, 0.0f, 10.0f)
 
             firstBuild = false
         }
         else {
-            backTilemap.update(backIndices)
-            frontTilemap.update(frontIndices)
+            var tx = 0
+            var ty = 0
+            backTilemap.clearTiles()
+            for (i in 0 until backIndices.size step 8) {
+                if (backIndices[i+2] >= 0.0f) {
+                    backTilemap.setTile(
+                        tx,
+                        ty,
+                        backIndices[i + 2].toInt(),
+                        backIndices[i + 3].toInt(),
+                        backIndices[i + 4],
+                        backIndices[i + 5],
+                        backIndices[i + 6],
+                        backIndices[i + 7]
+                    )
+                }
+
+                tx += 1
+                if (tx >= width) {
+                    tx = 0
+                    ty += 1
+                }
+            }
+
+            tx = 0
+            ty = 0
+            frontTilemap.clearTiles()
+            for (i in 0 until frontIndices.size step 8) {
+                if (frontIndices[i+2] >= 0.0f) {
+                    frontTilemap.setTile(
+                        tx,
+                        ty,
+                        frontIndices[i + 2].toInt(),
+                        frontIndices[i + 3].toInt(),
+                        frontIndices[i + 4],
+                        frontIndices[i + 5],
+                        frontIndices[i + 6],
+                        frontIndices[i + 7]
+                    )
+                }
+                tx += 1
+                if (tx >= width) {
+                    tx = 0
+                    ty += 1
+                }
+            }
         }
     }
 
     private fun spreadLightOnTilemap(cellX: Int, cellY: Int) {
-        val backIndices = Array(width*height){ TileGfxNone }
+        val backIndices = Array(width*height*8){ -1.0f }
         var sx = cellX * width
         var sy = cellY * height
 
-        for (i in 0 until width*height) {
-            if (sx + sy*mapWidth >= map.size) {
+        for (i in 0 until width*height*8 step 8) {
+            val index = sx + sy * mapWidth
+            if (index >= map.size) {
                 break
             }
 
-            backIndices[i] = mapBackIndices[sx + sy*mapWidth]
-            backIndices[i].red = 0.0f
-            backIndices[i].green = 0.0f
-            backIndices[i].blue = 0.0f
-            backIndices[i].alpha = 1.0f
+            backIndices[i] = mapBackIndices[index]
+            backIndices[i+1] = mapBackIndices[index+1]
+            backIndices[i+2] = mapBackIndices[index+2]
+            backIndices[i+3] = mapBackIndices[index+3]
+            backIndices[i+4] = 0.0f
+            backIndices[i+5] = 0.0f
+            backIndices[i+6] = 0.0f
+            backIndices[i+7] = 1.0f
 
             sx += 1
             if (sx >= cellX * width + width) {
@@ -680,10 +774,32 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         generateLightMap(backIndices)
-        backTilemap.update(backIndices)
+        var tx = 0
+        var ty = 0
+        backTilemap.clearTiles()
+        for (i in 0 until backIndices.size step 8) {
+            if (backIndices[i+2] >= 0.0f) {
+                backTilemap.setTile(
+                    tx,
+                    ty,
+                    backIndices[i + 2].toInt(),
+                    backIndices[i + 3].toInt(),
+                    backIndices[i + 4],
+                    backIndices[i + 5],
+                    backIndices[i + 6],
+                    backIndices[i + 7]
+                )
+            }
+
+            tx += 1
+            if (tx >= width) {
+                tx = 0
+                ty += 1
+            }
+        }
     }
 
-    private fun generateLightMap(backIndices: Array<TileGfx>) {
+    private fun generateLightMap(backIndices: Array<Float>) {
         // Clear old light values
         for (i in 0 until lightValues.size) {
             lightValues[i] = Vector4f(0.48f, 0.62f, 0.69f, 0.2f)
@@ -723,10 +839,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         var iy = 0
         var index = 0
         for (i in 0 until lightValues.size) {
-            backIndices[ix + iy * width].red = (lightValues[i].x)
-            backIndices[ix + iy * width].green = (lightValues[i].y)
-            backIndices[ix + iy * width].blue = (lightValues[i].z)
-            backIndices[ix + iy * width].alpha = (lightValues[i].w)
+            val tileIndex = (ix + iy * width)*8
+            backIndices[tileIndex+4] = (lightValues[i].x)
+            backIndices[tileIndex+5] = (lightValues[i].y)
+            backIndices[tileIndex+6] = (lightValues[i].z)
+            backIndices[tileIndex+7] = (lightValues[i].w)
 
             index += 36
             x += 64.0f
@@ -848,8 +965,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         val room = Room(firstRoomTiles, Vector4i(0,0,width,height), DIRT_ROOM)
         rooms.add(room)
 
-        mapBackIndices = Array(mapWidth*mapHeight){ TileGfxNone }
-        mapFrontIndices = Array(mapWidth*mapHeight){ TileGfxNone }
+        mapBackIndices = Array(mapWidth*mapHeight*8){ -1.0f }
+        mapFrontIndices = Array(mapWidth*mapHeight*8){ -1.0f }
         populateTilemap()
 
         // Set position of start and exit
@@ -866,7 +983,9 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             else -> throw IllegalStateException("Room type " + endRoom.type + " is not supported!")
         }
 
-        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, exitType)
+        val exitIndex = (exitPosition.x + exitPosition.y * mapWidth) * 8
+        mapBackIndices[exitIndex + 2] = 2.0f
+        mapBackIndices[exitIndex + 3] = exitType.toFloat()
         room.generateLightsInRoom(scene, random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
 
         // Put campfire next to exit on first level
@@ -909,8 +1028,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         map = IntArray(mapWidth*mapHeight){1}
         buildRooms()
 
-        mapBackIndices = Array(mapWidth * mapHeight) { TileGfxNone }
-        mapFrontIndices = Array(mapWidth * mapHeight) { TileGfxNone }
+        mapBackIndices = Array(mapWidth * mapHeight * 8) { -1.0f }
+        mapFrontIndices = Array(mapWidth * mapHeight * 8) { -1.0f }
         populateTilemap()
 
         // Set position of start and exit
@@ -927,54 +1046,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             else -> throw IllegalStateException("Room type " + endRoom.type + " is not supported!")
         }
 
-        mapBackIndices[exitPosition.x + exitPosition.y * mapWidth] = TileGfx(2, exitType)
+        val exitIndex = (exitPosition.x + exitPosition.y * mapWidth) * 8
+        mapBackIndices[exitIndex+2] = 2.toFloat()
+        mapBackIndices[exitIndex+2] = exitType.toFloat()
 
         generateRooms(scene, healthBarSystem, healthBarMaterial)
-
-        val pixelData = BufferUtils.createByteBuffer(mapWidth * mapHeight * 3)
-        for (room in rooms) {
-            var R = random.nextInt(127).toByte()
-            var G = random.nextInt(127).toByte()
-            var B = random.nextInt(127).toByte()
-
-            if (room.type == KRAC_BASE) {
-                R = 0
-                G = 127
-                B = 0
-            } else if (room.type == DIRT_ROOM) {
-                R = 127
-                G = 64
-                B = 0
-            } else if (room.type == COLD_DIRT_ROOM) {
-                R = 127
-                G = 96
-                B = 96
-            }
-
-            for (tile in room.tiles) {
-                pixelData.put((tile.x + tile.y * mapWidth) * 3, R)
-                pixelData.put((tile.x + tile.y * mapWidth) * 3 + 1, G)
-                pixelData.put((tile.x + tile.y * mapWidth) * 3 + 2, B)
-            }
-
-            for (enemy in room.enemies) {
-                val x = ((enemy.transform.x / 64.0f) + (enemy.cellX * width)).toInt()
-                val y = ((enemy.transform.y / 64.0f) + (enemy.cellY * height)).toInt()
-
-                pixelData.put((x + y * mapWidth) * 3, 127)
-                pixelData.put((x + y * mapWidth) * 3 + 1, 0)
-                pixelData.put((x + y * mapWidth) * 3 + 2, 0)
-            }
-
-            for (container in room.containers) {
-                val x = ((container.transform.x / 64.0f) + (container.cellX * width)).toInt()
-                val y = ((container.transform.y / 64.0f) + (container.cellY * height)).toInt()
-                pixelData.put((x + y * mapWidth) * 3, 127)
-                pixelData.put((x + y * mapWidth) * 3 + 1, 100)
-                pixelData.put((x + y * mapWidth) * 3 + 2, 0)
-            }
-        }
-        STBImageWrite.stbi_write_png("levels/level.png", mapWidth, mapHeight, 3, pixelData, mapWidth * 3)
     }
 
     private fun populateTilemap() {
@@ -987,44 +1063,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             }
 
             for (tile in room.tiles) {
-                val index = tile.x + tile.y * mapWidth
+                val index = (tile.x + tile.y * mapWidth) * 8
                 if (random.nextFloat() <= 0.1f) {
-                    mapBackIndices[index] = TileGfx(7, tileY)
+                    mapBackIndices[index+2] = 7.0f
+                    mapBackIndices[index+3] = tileY.toFloat()
                 }
                 else {
-                    mapBackIndices[index] = TileGfx(0, tileY)
-                }
-
-                if (tile.y > 0) {
-                    if (map[tile.x + (tile.y-1)*mapWidth] == 1) {
-                        mapBackIndices[tile.x + (tile.y - 1) * mapWidth] = TileGfx(1, tileY)
-
-                        if (tile.y > 1) {
-                            if (map[tile.x + (tile.y-2)*mapWidth] == 1) {
-                                mapFrontIndices[tile.x + (tile.y - 2) * mapWidth] = TileGfx(3, tileY)
-                            }
-                            else {
-                                mapFrontIndices[tile.x + (tile.y - 2) * mapWidth] = TileGfx(3, tileY)
-                                map[tile.x + (tile.y - 2) * mapWidth] = 1
-                            }
-                        }
-                    }
-                }
-
-                // Add black tiles at the edges where there's atleast 3 walls below a floor tile
-                // The wall closest to the top floor tile will be populated with a black tile
-                if (tile.y < mapHeight - 3) {
-                    if (map[tile.x + (tile.y+1) * mapWidth] == 1 &&
-                        map[tile.x + (tile.y+2) * mapWidth] == 1 &&
-                        map[tile.x + (tile.y+3) * mapWidth] == 1) {
-                        mapFrontIndices[tile.x + (tile.y+1) * mapWidth] = TileGfx(0, 11)
-                        map[tile.x + (tile.y + 1) * mapWidth] = 1
-                    }
-                }
-
-                val r = random.nextInt(20)
-                if (r == 1){
-                    mapBackIndices[tile.x + tile.y * mapWidth] = TileGfx(random.nextInt(3) + 4, tileY)
+                    mapBackIndices[index+2] = 0.0f
+                    mapBackIndices[index+3] = tileY.toFloat()
                 }
             }
         }
@@ -1043,59 +1089,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 room.tiles.remove(tile)
             }
         }
-    }
-
-    private fun numNeighbours(x: Int, y: Int): Int {
-        var count = 0
-        if (x > 0) {
-            if (map[(x-1) + y * mapWidth] == 0) {
-                count += 1
-            }
-
-            if (y > 0) {
-                if (map[(x-1) + (y-1) * mapWidth] == 0) {
-                    count += 1
-                }
-            }
-
-            if (y < mapHeight - 1) {
-                if (map[(x-1) + (y+1) * mapWidth] == 0) {
-                    count += 1
-                }
-            }
-        }
-
-        if (x < mapWidth - 1) {
-            if (map[(x+1) + y * mapWidth] == 0) {
-                count += 1
-            }
-
-            if (y > 0) {
-                if (map[(x+1) + (y-1) * mapWidth] == 0) {
-                    count += 1
-                }
-            }
-
-            if (y < mapHeight - 1) {
-                if (map[(x+1) + (y+1) * mapWidth] == 0) {
-                    count += 1
-                }
-            }
-        }
-
-        if (y > 0) {
-            if (map[x + (y-1) * mapWidth] == 0) {
-                count += 1
-            }
-        }
-
-        if (y < mapHeight - 1) {
-            if (map[x + (y+1) * mapWidth] == 0) {
-                count += 1
-            }
-        }
-
-        return count
     }
 
     private fun buildRooms() {

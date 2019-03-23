@@ -272,7 +272,8 @@ class Player : Entity() {
                 }
             }
 
-            scene.activeCamera.view.translate(0.0f, shake * 2, 0.0f)
+            scene.activeCamera.x = 0.0f
+            scene.activeCamera.y = shake * 2
 
             val cl = Math.max(Math.min(1.0f,shake),0.0f)
             renderComponent.color.set(cl,cl,cl,cl)
@@ -284,7 +285,8 @@ class Player : Entity() {
         }
         else {
             renderComponent.color.set(0.0f, 0.0f, 0.0f, 0.0f)
-            scene.activeCamera.view.identity()
+            scene.activeCamera.x = 0.0f
+            scene.activeCamera.y = 0.0f
         }
 
         if (!inventory.visible) {

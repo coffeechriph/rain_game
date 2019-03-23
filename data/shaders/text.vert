@@ -19,11 +19,11 @@ layout(set = 0, binding = 0) uniform SceneData {
 
 void main() {
     vec2 cpos = vec2(container.bounds.x, container.bounds.y);
-    vec2 csize = vec2(container.bounds.z + container.bounds.x, container.bounds.w + container.bounds.y);
+    vec2 csize = vec2(container.bounds.z, container.bounds.w);
 
     gl_Position = sceneData.projectionMatrix * vec4(pos.x, pos.y, pos.z, 1.0);
     Uv = uv;
     Color = color;
     containerData = vec4(cpos.x, cpos.y, csize.x, csize.y);
-    fpos = vec2(container.bounds.x + pos.x, container.bounds.y + pos.y);
+    fpos = vec2(pos.x, pos.y);
 }

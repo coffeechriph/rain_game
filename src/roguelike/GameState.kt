@@ -201,14 +201,12 @@ class GameState(stateManager: StateManager): State(stateManager) {
         // TODO: Constant window dimensions
         level.create(resourceFactory, scene, 8960 / 64, 5376 / 64, 1280 / 64, 768 / 64)
         level.buildFirstRoom(scene)
-        scene.addTilemap(level.backTilemap)
-        scene.addTilemap(level.frontTilemap)
 
         scene.activeCamera = camera
 
         player.setPosition(level.getFirstTilePos())
         player.getMoveComponent()!!.update(0.0f, 0.0f)
-        level.switchCell(resourceFactory, player.cellX, player.cellY)
+        level.switchCell(resourceFactory, scene, player.cellX, player.cellY)
 
         inventory = Inventory(player)
         player.inventory = inventory
@@ -235,7 +233,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         }
 
         if (player.playerMovedCell) {
-            level.switchCell(resourceFactory, player.cellX, player.cellY)
+            level.switchCell(resourceFactory, scene, player.cellX, player.cellY)
             player.playerMovedCell = false
         }
 
@@ -250,7 +248,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
             player.currentLevel += 1
             level.build(System.currentTimeMillis(), scene, healthBarSystem, healthMaterial)
             player.setPosition(level.getFirstTilePos())
-            level.switchCell(resourceFactory, player.cellX, player.cellY)
+            level.switchCell(resourceFactory, scene, player.cellX, player.cellY)
 
             currentLevelText.string = "Current Level: ${player.currentLevel}"
             currentLevelText.x = currentLevelText.w/2.0f
