@@ -11,6 +11,7 @@ import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.*
 import rain.api.scene.*
+import rain.api.scene.parse.JsonSceneLoader
 import rain.vulkan.VertexAttribute
 import roguelike.Entity.*
 import java.lang.Math
@@ -940,87 +941,51 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     }
 
     fun buildFirstRoom(scene: Scene) {
-        random = Random(System.currentTimeMillis())
-        var x = 0
-        var y = 0
-        val firstRoomTiles = ArrayList<Vector2i>()
-        for (i in 0 until width*height) {
-            if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-                map[x + (y*mapWidth)] = 1
-            }
-            else if (y == 1 && (x == 1 || x == width-2)) {
-                map[x + (y*mapWidth)] = 1
-            }
-            else {
-                firstRoomTiles.add(Vector2i(x, y))
-            }
+        val loadedScene = JsonSceneLoader().load("dirt_room_1.json")
+        for (mapDefinition in loadedScene.map) {
+            mapBackIndices = Array(mapDefinition.tileNumX*mapDefinition.tileNumY*8){-1.0f}
+            mapFrontIndices = Array(mapDefinition.tileNumX*mapDefinition.tileNumY*8){-1.0f}
+            var layerIndex = 0
+            for (layer in mapDefinition.layers) {
+                val tilemap = scene.createTilemap(
+                    tilemapMaterial,
+                    mapDefinition.tileNumX,
+                    mapDefinition.tileNumY,
+                    mapDefinition.tileWidth,
+                    mapDefinition.tileHeight
+                )
 
-            x += 1
-            if (x >= width) {
-                x = 0
-                y += 1
+                for (group in layer.mapLayerTileGroup) {
+                    for (index in group.tileIndicesIntoMap) {
+                        if (layerIndex == 0) {
+                            mapBackIndices[index*8+2] = group.imageX.toFloat()
+                            mapBackIndices[index*8+3] = group.imageY.toFloat()
+                            mapBackIndices[index*8+4] = 1.0f
+                            mapBackIndices[index*8+5] = 1.0f
+                            mapBackIndices[index*8+6] = 1.0f
+                            mapBackIndices[index*8+7] = 1.0f
+                        }
+                        else {
+                            mapFrontIndices[index*8+2] = group.imageX.toFloat()
+                            mapFrontIndices[index*8+3] = group.imageY.toFloat()
+                            mapFrontIndices[index*8+4] = 1.0f
+                            mapFrontIndices[index*8+5] = 1.0f
+                            mapFrontIndices[index*8+6] = 1.0f
+                            mapFrontIndices[index*8+7] = 1.0f
+                        }
+
+                        tilemap.setTile(
+                            index % mapDefinition.tileNumX,
+                            index / mapDefinition.tileNumX,
+                            group.imageX,
+                            group.imageY)
+                    }
+                }
+
+                tilemap.transform.z = layerIndex.toFloat()
+                layerIndex++
             }
         }
-
-        val room = Room(firstRoomTiles, Vector4i(0,0,width,height), DIRT_ROOM)
-        rooms.add(room)
-
-        mapBackIndices = Array(mapWidth*mapHeight*8){ -1.0f }
-        mapFrontIndices = Array(mapWidth*mapHeight*8){ -1.0f }
-        populateTilemap()
-
-        // Set position of start and exit
-        val startRoom = rooms[0]
-        val endRoom = rooms[0]
-
-        startPosition = Vector2i(width/2, 3)
-        exitPosition = Vector2i(width/2, height/2)
-
-        val exitType = when (endRoom.type) {
-            DIRT_ROOM -> 0
-            COLD_DIRT_ROOM -> 2
-            KRAC_BASE -> 1
-            else -> throw IllegalStateException("Room type " + endRoom.type + " is not supported!")
-        }
-
-        val exitIndex = (exitPosition.x + exitPosition.y * mapWidth) * 8
-        mapBackIndices[exitIndex + 2] = 2.0f
-        mapBackIndices[exitIndex + 3] = exitType.toFloat()
-        room.generateLightsInRoom(scene, random, map, mapWidth, width, height, width*2+height*2, false, torchSystem, itemMaterial, quadMesh)
-
-        // Put campfire next to exit on first level
-        val emitter = scene.createParticleEmitter(2.0f, 40, 20.0f)
-        emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
-        emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.1f)
-        emitter.velocity.y = -20.0f
-        emitter.transform.y = 16.0f
-        emitter.transform.sx = 48.0f
-        emitter.transform.sy = 48.0f
-        emitter.transform.z = 5.0f
-        emitter.enabled = false
-
-        val tx = exitPosition.x % width
-        val ty = exitPosition.y % height
-        val et = LightSource(exitPosition.x / width, exitPosition.y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
-        torchSystem.newEntity(et)
-                .build()
-
-        et.transform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 1.0f)
-        et.transform.sx = 1.0f
-        et.transform.sy = 1.0f
-
-        emitter.transform.parentTransform = et.transform
-        room.campfire.add(et)
-
-        // Give the player a nice chest to start off with
-        val container = Container(0, 5)
-        containerSystem.newEntity(container)
-                .attachRenderComponent(itemMaterial, quadMesh)
-                .build()
-
-        container.setPosition(Vector2i((tx+1)*64 + 32, ty*64 + 32))
-        container.getRenderComponents()[0].visible = true
-        room.containers.add(container)
     }
 
     fun build(seed: Long, scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
