@@ -1,22 +1,18 @@
 package roguelike.Level
 
-import com.badlogic.gdx.physics.box2d.BodyDef
 import org.joml.*
-import org.lwjgl.BufferUtils
-import org.lwjgl.system.MemoryUtil.memAlloc
-import org.lwjgl.stb.*
 import rain.api.Input
-import rain.api.components.Transform
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.gfx.*
 import rain.api.scene.*
 import rain.api.scene.parse.JsonSceneLoader
-import rain.vulkan.VertexAttribute
+import rain.assertion
 import roguelike.Entity.*
+import java.io.File
 import java.lang.Math
-import java.nio.ByteBuffer
-import kotlin.math.sign
+import java.util.stream.Collector
+import java.util.stream.Collectors
 
 class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     lateinit var map: IntArray
@@ -33,10 +29,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         private set
     var maxCellY = 0
         private set
-    lateinit var backTilemap: Tilemap
-        private set
-    lateinit var frontTilemap: Tilemap
-        private set
 
     private lateinit var lightValues: Array<Vector4f>
     private lateinit var tilemapMaterial: Material
@@ -47,10 +39,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var torchSystem: EntitySystem<LightSource>
     private var firstBuild = true
 
-    private var mapBackIndices = Array(0){ -1.0f }
-    private var mapFrontIndices = Array(0){ -1.0f }
-    private var rooms = ArrayList<Room>()
-    private lateinit var random: Random
+    private var random = Random(System.currentTimeMillis())
     private lateinit var enemySystem: EntitySystem<Enemy>
     private lateinit var enemyAttackSystem: EntitySystem<Entity>
     private lateinit var enemyTexture: Texture2d
@@ -63,8 +52,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var enemyTargetSystem: EntitySystem<Entity>
     private lateinit var xpBallSystem: EntitySystem<XpBall>
     private lateinit var navMesh: NavMesh
-    var startPosition = Vector2i()
-    var exitPosition = Vector2i()
 
     private var delayLightUpdate = 0
 
@@ -73,6 +60,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private val activeLightSources = ArrayList<LightSource>()
     private val collisionBoxes = ArrayList<Vector4i>()
     lateinit var quadMesh: Mesh
+
+    private var cellTypes = ArrayList<CellType>()
+    private var currentLevelCells = ArrayList<Cell>()
+    private var currentCell: Cell? = null
 
     fun lightIntensityAt(x: Float, y: Float): Float {
         var tx = (x / 64.0f).toInt()
@@ -100,7 +91,127 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         return false
     }
 
+    fun create(resourceFactory: ResourceFactory, scene: Scene, mapWidth: Int, mapHeight: Int, width: Int, height: Int) {
+        this.mapWidth = mapWidth
+        this.mapHeight = mapHeight
+        this.width = width
+        this.height = height
+        firstBuild = true
+        loadAvailableCellTypes()
+
+        maxCellX = mapWidth / width
+        maxCellY = mapHeight / height
+        texture = resourceFactory.buildTexture2d()
+            .withName("tilemapTexture")
+            .fromImageFile("./data/textures/tiles.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+
+        texture.setTiledTexture(16,16)
+        tilemapMaterial = resourceFactory.buildMaterial()
+            .withName("tilemapMaterial")
+            .withVertexShader("./data/shaders/tilemap.vert.spv")
+            .withFragmentShader("./data/shaders/tilemap.frag.spv")
+            .withTexture(texture)
+            .withBlendEnabled(false)
+            .build()
+
+        itemMaterial = resourceFactory.buildMaterial()
+            .withName("itemMaterial")
+            .withVertexShader("./data/shaders/basic.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withTexture(texture)
+            .withBatching(false)
+            .build()
+
+        map = IntArray(mapWidth*mapHeight)
+        navMesh = NavMesh(width, height)
+        navMesh.allowDiagonals = false
+
+        enemyTexture = resourceFactory.buildTexture2d()
+            .withName("enemyTexture")
+            .fromImageFile("./data/textures/krac2.0.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+
+        enemyTexture.setTiledTexture(16,16)
+        enemyMaterial = resourceFactory.buildMaterial()
+            .withName("enemyMaterial")
+            .withVertexShader("./data/shaders/basic.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withTexture(enemyTexture)
+            .withBatching(false)
+            .build()
+
+        enemySystem = scene.newSystem(enemyMaterial)
+
+        enemyAttackMaterial = resourceFactory.buildMaterial()
+            .withName("enemyAttackMaterial")
+            .withVertexShader("./data/shaders/basic.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withTexture(texture)
+            .withDepthWrite(true)
+            .withBlendEnabled(false)
+            .withBatching(false)
+            .build()
+
+        enemyAttackSystem = scene.newSystem(enemyAttackMaterial)
+
+        collisionSystem = scene.newSystem(null)
+        containerSystem = scene.newSystem(itemMaterial)
+        levelItemSystem = scene.newSystem(itemMaterial)
+        xpBallSystem = scene.newSystem(itemMaterial)
+
+        torchTexture = resourceFactory.buildTexture2d()
+            .withName("torch")
+            .fromImageFile("./data/textures/torch.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+
+        torchMaterial = resourceFactory.buildMaterial()
+            .withName("torchMaterial")
+            .withVertexShader("./data/shaders/basic.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withTexture(torchTexture)
+            .withBatching(false)
+            .build()
+        torchSystem = scene.newSystem(torchMaterial)
+
+        lightValues = Array(width*height){Vector4f()}
+
+        enemyTargetSystem = scene.newSystem(itemMaterial)
+        enemyTargetEntity = Entity()
+        enemyTargetSystem.newEntity(enemyTargetEntity)
+            .attachRenderComponent(itemMaterial, quadMesh)
+            .build()
+
+        val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()[0]
+        enemyTargetEntityRenderer.visible = false
+        enemyTargetEntityRenderer.textureTileOffset.set(4,15)
+        enemyTargetEntityRenderer.addCustomUniformData(0, 1.0f)
+    }
+
+    fun loadAvailableCellTypes() {
+        if (!File("./data/cells").exists()) {
+            assertion("/data/cells directory does not exist!")
+        }
+
+        val directory = File("./data/cells")
+        for (file in directory.listFiles()) {
+            if (file.isDirectory) {
+                continue
+            }
+
+            val loadedScene = JsonSceneLoader().load(file.absolutePath)
+            val cell = CellType(width, height)
+            cell.create(loadedScene)
+            cellTypes.add(cell)
+        }
+    }
+
     fun update(input: Input) {
+        currentCell!!.visible = true
+
         val lc = lightIntensityAt(player.transform.x, player.transform.y)
         player.getRenderComponents()[0].addCustomUniformData(0, lc)
         player.bootsArmor.getRenderComponents()[0].addCustomUniformData(1, lc)
@@ -109,7 +220,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         player.handsArmor.getRenderComponents()[0].addCustomUniformData(1, lc)
 
         if (delayLightUpdate == 0) {
-            spreadLightOnTilemap(player.cellX, player.cellY)
+            spreadLightOnTilemap(0, 0)
             delayLightUpdate = 2
         }
         else {
@@ -403,8 +514,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     direction.x *= 64.0f
                     direction.y *= 64.0f
                     item.setPosition(Vector2i(container.transform.x.toInt()+direction.x.toInt(), container.transform.y.toInt()+direction.y.toInt()))
-                    item.cellX = player.cellX
-                    item.cellY = player.cellY
                     item.transform.sx = 40.0f
                     item.transform.sy = 40.0f
                     item.transform.z = 2.0f
@@ -414,393 +523,45 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
     }
 
-    fun getFirstTilePos(): Vector2i {
-        return Vector2i(startPosition.x * 64, startPosition.y * 64)
-    }
-
-    fun create(resourceFactory: ResourceFactory, scene: Scene, mapWidth: Int, mapHeight: Int, width: Int, height: Int) {
-        firstBuild = true
-        maxCellX = mapWidth / width
-        maxCellY = mapHeight / height
-        texture = resourceFactory.buildTexture2d()
-                .withName("tilemapTexture")
-                .fromImageFile("./data/textures/tiles.png")
-                .withFilter(TextureFilter.NEAREST)
-                .build()
-
-        texture.setTiledTexture(16,16)
-        tilemapMaterial = resourceFactory.buildMaterial()
-                .withName("tilemapMaterial")
-                .withVertexShader("./data/shaders/tilemap.vert.spv")
-                .withFragmentShader("./data/shaders/tilemap.frag.spv")
-                .withTexture(texture)
-                .withBlendEnabled(false)
-                .build()
-
-        itemMaterial = resourceFactory.buildMaterial()
-                .withName("itemMaterial")
-                .withVertexShader("./data/shaders/basic.vert.spv")
-                .withFragmentShader("./data/shaders/basic.frag.spv")
-                .withTexture(texture)
-                .withBatching(false)
-                .build()
-
-        this.mapWidth = mapWidth
-        this.mapHeight = mapHeight
-        this.width = width
-        this.height = height
-        map = IntArray(mapWidth*mapHeight)
-        navMesh = NavMesh(width, height)
-        navMesh.allowDiagonals = false
-
-        enemyTexture = resourceFactory.buildTexture2d()
-                .withName("enemyTexture")
-                .fromImageFile("./data/textures/krac2.0.png")
-                .withFilter(TextureFilter.NEAREST)
-                .build()
-
-        enemyTexture.setTiledTexture(16,16)
-        enemyMaterial = resourceFactory.buildMaterial()
-                .withName("enemyMaterial")
-                .withVertexShader("./data/shaders/basic.vert.spv")
-                .withFragmentShader("./data/shaders/basic.frag.spv")
-                .withTexture(enemyTexture)
-                .withBatching(false)
-                .build()
-
-        enemySystem = scene.newSystem(enemyMaterial)
-
-        enemyAttackMaterial = resourceFactory.buildMaterial()
-                .withName("enemyAttackMaterial")
-                .withVertexShader("./data/shaders/basic.vert.spv")
-                .withFragmentShader("./data/shaders/basic.frag.spv")
-                .withTexture(texture)
-                .withDepthWrite(true)
-                .withBlendEnabled(false)
-                .withBatching(false)
-                .build()
-
-        enemyAttackSystem = scene.newSystem(enemyAttackMaterial)
-
-        collisionSystem = scene.newSystem(null)
-        containerSystem = scene.newSystem(itemMaterial)
-        levelItemSystem = scene.newSystem(itemMaterial)
-        xpBallSystem = scene.newSystem(itemMaterial)
-
-        torchTexture = resourceFactory.buildTexture2d()
-                .withName("torch")
-                .fromImageFile("./data/textures/torch.png")
-                .withFilter(TextureFilter.NEAREST)
-                .build()
-
-        torchMaterial = resourceFactory.buildMaterial()
-                .withName("torchMaterial")
-                .withVertexShader("./data/shaders/basic.vert.spv")
-                .withFragmentShader("./data/shaders/basic.frag.spv")
-                .withTexture(torchTexture)
-                .withBatching(false)
-                .build()
-        torchSystem = scene.newSystem(torchMaterial)
-
-        lightValues = Array(width*height){Vector4f()}
-
-        enemyTargetSystem = scene.newSystem(itemMaterial)
-        enemyTargetEntity = Entity()
-        enemyTargetSystem.newEntity(enemyTargetEntity)
-                .attachRenderComponent(itemMaterial, quadMesh)
-                .build()
-
-        val enemyTargetEntityRenderer = enemyTargetEntity.getRenderComponents()[0]
-        enemyTargetEntityRenderer.visible = false
-        enemyTargetEntityRenderer.textureTileOffset.set(4,15)
-        enemyTargetEntityRenderer.addCustomUniformData(0, 1.0f)
-    }
-
-    fun switchCell(resourceFactory: ResourceFactory, scene: Scene, cellX: Int, cellY: Int) {
-        for (enemy in activeEnemies) {
-            enemy.getRenderComponents()[0].visible = false
-            enemy.healthBar.getRenderComponents()[0].visible = false
-        }
-
-        for (container in activeContainers) {
-            container.getRenderComponents()[0].visible = false
-        }
-
-        for (lights in activeLightSources) {
-            if (lights.getRenderComponents().isNotEmpty()) {
-                lights.getRenderComponents()[0].visible = false
-            }
-
-            lights.emitter.enabled = false
-        }
-
-        activeEnemies.clear()
-        activeContainers.clear()
-        activeLightSources.clear()
-
-        for (room in rooms) {
-            val removeMe = ArrayList<Enemy>()
-            for (enemy in room.enemies) {
-                if (enemy.health <= 0) {
-                    removeMe.add(enemy)
-                    continue
-                }
-
-                if (enemy.cellX == cellX && enemy.cellY == cellY) {
-                    enemy.getRenderComponents()[0].visible = enemy.health > 0 && enemy.cellX == cellX && enemy.cellY == cellY
-                    enemy.healthBar.getRenderComponents()[0].visible = enemy.getRenderComponents()[0].visible
-                    if (enemy.getRenderComponents()[0].visible) {
-                        activeEnemies.add(enemy)
-                    }
+    fun switchCell(dir: Direction) {
+        when(dir) {
+            Direction.LEFT -> {
+                println("MOVING LEFT")
+                if (currentCell!!.leftNeighbourCell != null) {
+                    println("SWITCHING LEFT")
+                    currentCell!!.visible = false
+                    currentCell = currentCell!!.leftNeighbourCell
+                    currentCell!!.visible = true
                 }
             }
-
-            for (enemy in removeMe) {
-                room.enemies.remove(enemy)
-            }
-
-            for (container in room.containers) {
-                if (container.cellX == cellX && container.cellY == cellY) {
-                    container.getRenderComponents()[0].visible = container.cellX == cellX && container.cellY == cellY
-                    activeContainers.add(container)
+            Direction.RIGHT -> {
+                if (currentCell!!.rightNeighbourCell != null) {
+                    currentCell!!.visible = false
+                    currentCell = currentCell!!.rightNeighbourCell
+                    currentCell!!.visible = true
                 }
             }
-
-            for (light in room.torches) {
-                if (light.cellX == cellX && light.cellY == cellY) {
-                    light.getRenderComponents()[0].visible = false
-
-                    light.emitter.enabled = true
-                    activeLightSources.add(light)
+            Direction.UP -> {
+                if (currentCell!!.topNeighbourCell != null) {
+                    currentCell!!.visible = false
+                    currentCell = currentCell!!.topNeighbourCell
+                    currentCell!!.visible = true
                 }
             }
-
-            for (light in room.campfire) {
-                if (light.cellX == cellX && light.cellY == cellY) {
-                    light.emitter.enabled = true
-                    activeLightSources.add(light)
-                }
-            }
-        }
-
-        val backIndices = Array(width*height*8){ -1.0f }
-        val frontIndices = Array(width*height*8){ -1.0f }
-        var sx = cellX * width
-        var sy = cellY * height
-
-        var cx = 0.0f
-        var cy = 0.0f
-        collisionSystem.clear()
-        collisionBoxes.clear()
-        for (i in 0 until width*height) {
-            if (sx + sy*mapWidth >= map.size) {
-                break
-            }
-
-            backIndices[i] = mapBackIndices[sx + sy*mapWidth]
-            frontIndices[i] = mapFrontIndices[sx + sy*mapWidth]
-
-            if (map[sx + sy*mapWidth] == 1) {
-                navMesh.map[i] = 127
-                collisionBoxes.add(Vector4i(cx.toInt(), cy.toInt(), 64, 64))
-
-                val e = Entity()
-                collisionSystem.newEntity(e)
-                        .attachBoxColliderComponent(64.0f, 64.0f, BodyDef.BodyType.StaticBody)
-                        .build()
-                val tr = e.transform
-                val cl = collisionSystem.findColliderComponent(e.getId())!!
-                cl.setPosition(cx + 32.0f, cy + 32.0f)
-                cl.setFriction(0.15f)
-                tr.sx = 64.0f
-                tr.sy = 64.0f
-                tr.z = 13.0f
-            }
-            else {
-                navMesh.map[i] = 0
-            }
-
-            sx += 1
-            if (sx >= cellX * width + width) {
-                sx = cellX * width
-                sy += 1
-            }
-
-            cx += 64.0f
-            if (cx >= width * 64.0f) {
-                cx = 0.0f
-                cy += 64.0f
-            }
-        }
-
-        for (container in activeContainers) {
-            if (container.cellX == cellX && container.cellY == cellY) {
-                val ix: Int = (container.transform.x/64).toInt()
-                val iy: Int = (container.transform.y/64).toInt()
-                navMesh.map[ix + iy*width] = 127.toByte()
-            }
-        }
-
-        if (firstBuild) {
-            backTilemap = scene.createTilemap(tilemapMaterial, width, height, 64.0f, 64.0f)
-            frontTilemap = scene.createTilemap(tilemapMaterial, width, height, 64.0f, 64.0f)
-            var tx = 0
-            var ty = 0
-            backTilemap.clearTiles()
-            for (i in 0 until backIndices.size step 8) {
-                if (backIndices[i+2] >= 0.0f) {
-                    backTilemap.setTile(
-                        tx,
-                        ty,
-                        backIndices[i + 2].toInt(),
-                        backIndices[i + 3].toInt(),
-                        backIndices[i + 4],
-                        backIndices[i + 5],
-                        backIndices[i + 6],
-                        backIndices[i + 7]
-                    )
-                }
-
-                tx += 1
-                if (tx >= width) {
-                    tx = 0
-                    ty += 1
-                }
-            }
-
-            tx = 0
-            ty = 0
-            frontTilemap.clearTiles()
-            for (i in 0 until frontIndices.size step 8) {
-                if (frontIndices[i+2] >= 0.0f) {
-                    frontTilemap.setTile(
-                        tx,
-                        ty,
-                        frontIndices[i + 2].toInt(),
-                        frontIndices[i + 3].toInt(),
-                        frontIndices[i + 4],
-                        frontIndices[i + 5],
-                        frontIndices[i + 6],
-                        frontIndices[i + 7]
-                    )
-                }
-
-                tx += 1
-                if (tx >= width) {
-                    tx = 0
-                    ty += 1
-                }
-            }
-
-            backTilemap.transform.setPosition(0.0f, 0.0f, 1.0f)
-            frontTilemap.transform.setPosition(0.0f, 0.0f, 10.0f)
-
-            firstBuild = false
-        }
-        else {
-            var tx = 0
-            var ty = 0
-            backTilemap.clearTiles()
-            for (i in 0 until backIndices.size step 8) {
-                if (backIndices[i+2] >= 0.0f) {
-                    backTilemap.setTile(
-                        tx,
-                        ty,
-                        backIndices[i + 2].toInt(),
-                        backIndices[i + 3].toInt(),
-                        backIndices[i + 4],
-                        backIndices[i + 5],
-                        backIndices[i + 6],
-                        backIndices[i + 7]
-                    )
-                }
-
-                tx += 1
-                if (tx >= width) {
-                    tx = 0
-                    ty += 1
-                }
-            }
-
-            tx = 0
-            ty = 0
-            frontTilemap.clearTiles()
-            for (i in 0 until frontIndices.size step 8) {
-                if (frontIndices[i+2] >= 0.0f) {
-                    frontTilemap.setTile(
-                        tx,
-                        ty,
-                        frontIndices[i + 2].toInt(),
-                        frontIndices[i + 3].toInt(),
-                        frontIndices[i + 4],
-                        frontIndices[i + 5],
-                        frontIndices[i + 6],
-                        frontIndices[i + 7]
-                    )
-                }
-                tx += 1
-                if (tx >= width) {
-                    tx = 0
-                    ty += 1
+            Direction.DOWN -> {
+                if (currentCell!!.botNeighbourCell != null) {
+                    currentCell!!.visible = false
+                    currentCell = currentCell!!.botNeighbourCell
+                    currentCell!!.visible = true
                 }
             }
         }
     }
 
     private fun spreadLightOnTilemap(cellX: Int, cellY: Int) {
-        val backIndices = Array(width*height*8){ -1.0f }
-        var sx = cellX * width
-        var sy = cellY * height
-
-        for (i in 0 until width*height*8 step 8) {
-            val index = sx + sy * mapWidth
-            if (index >= map.size) {
-                break
-            }
-
-            backIndices[i] = mapBackIndices[index]
-            backIndices[i+1] = mapBackIndices[index+1]
-            backIndices[i+2] = mapBackIndices[index+2]
-            backIndices[i+3] = mapBackIndices[index+3]
-            backIndices[i+4] = 0.0f
-            backIndices[i+5] = 0.0f
-            backIndices[i+6] = 0.0f
-            backIndices[i+7] = 1.0f
-
-            sx += 1
-            if (sx >= cellX * width + width) {
-                sx = cellX * width
-                sy += 1
-            }
-        }
-
-        generateLightMap(backIndices)
-        var tx = 0
-        var ty = 0
-        backTilemap.clearTiles()
-        for (i in 0 until backIndices.size step 8) {
-            if (backIndices[i+2] >= 0.0f) {
-                backTilemap.setTile(
-                    tx,
-                    ty,
-                    backIndices[i + 2].toInt(),
-                    backIndices[i + 3].toInt(),
-                    backIndices[i + 4],
-                    backIndices[i + 5],
-                    backIndices[i + 6],
-                    backIndices[i + 7]
-                )
-            }
-
-            tx += 1
-            if (tx >= width) {
-                tx = 0
-                ty += 1
-            }
-        }
     }
 
-    private fun generateLightMap(backIndices: Array<Float>) {
+    private fun generateLightMap() {
         // Clear old light values
         for (i in 0 until lightValues.size) {
             lightValues[i] = Vector4f(0.48f, 0.62f, 0.69f, 0.2f)
@@ -840,11 +601,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         var iy = 0
         var index = 0
         for (i in 0 until lightValues.size) {
-            val tileIndex = (ix + iy * width)*8
-            backIndices[tileIndex+4] = (lightValues[i].x)
-            backIndices[tileIndex+5] = (lightValues[i].y)
-            backIndices[tileIndex+6] = (lightValues[i].z)
-            backIndices[tileIndex+7] = (lightValues[i].w)
+            // mapLayers[0].setTile(ix, iy, lightValues[i].x, lightValues[i].y, lightValues[i].z, lightValues[i].w)
 
             index += 36
             x += 64.0f
@@ -875,8 +632,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             lightValues[x + y * width] = Vector4f(r,g,b,a)
         }
 
-        val mx = player.cellX * width + x
-        val my = player.cellY * height + y
+        val mx = width + x
+        val my = height + y
         val color = Vector4f(value.x, value.y, value.z, value.w - att)
 
         if (x in 1..width) {
@@ -941,401 +698,95 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     }
 
     fun buildFirstRoom(scene: Scene) {
-        val loadedScene = JsonSceneLoader().load("dirt_room_1.json")
-        for (mapDefinition in loadedScene.map) {
-            mapBackIndices = Array(mapDefinition.tileNumX*mapDefinition.tileNumY*8){-1.0f}
-            mapFrontIndices = Array(mapDefinition.tileNumX*mapDefinition.tileNumY*8){-1.0f}
-            var layerIndex = 0
-            for (layer in mapDefinition.layers) {
-                val tilemap = scene.createTilemap(
-                    tilemapMaterial,
-                    mapDefinition.tileNumX,
-                    mapDefinition.tileNumY,
-                    mapDefinition.tileWidth,
-                    mapDefinition.tileHeight
-                )
-
-                for (group in layer.mapLayerTileGroup) {
-                    for (index in group.tileIndicesIntoMap) {
-                        if (layerIndex == 0) {
-                            mapBackIndices[index*8+2] = group.imageX.toFloat()
-                            mapBackIndices[index*8+3] = group.imageY.toFloat()
-                            mapBackIndices[index*8+4] = 1.0f
-                            mapBackIndices[index*8+5] = 1.0f
-                            mapBackIndices[index*8+6] = 1.0f
-                            mapBackIndices[index*8+7] = 1.0f
-                        }
-                        else {
-                            mapFrontIndices[index*8+2] = group.imageX.toFloat()
-                            mapFrontIndices[index*8+3] = group.imageY.toFloat()
-                            mapFrontIndices[index*8+4] = 1.0f
-                            mapFrontIndices[index*8+5] = 1.0f
-                            mapFrontIndices[index*8+6] = 1.0f
-                            mapFrontIndices[index*8+7] = 1.0f
-                        }
-
-                        tilemap.setTile(
-                            index % mapDefinition.tileNumX,
-                            index / mapDefinition.tileNumX,
-                            group.imageX,
-                            group.imageY)
-                    }
-                }
-
-                tilemap.transform.z = layerIndex.toFloat()
-                layerIndex++
-            }
-        }
+        val firstCellType = cellTypes[random.nextInt(cellTypes.size)]
+        val cell = Cell(firstCellType, scene, tilemapMaterial)
+        currentLevelCells.add(cell)
+        createCellConnections(cell, scene)
+        currentCell = cell
     }
 
-    fun build(seed: Long, scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
-        random = Random(seed)
-        map = IntArray(mapWidth*mapHeight){1}
-        buildRooms()
+    private fun createCellConnections(cell: Cell, scene: Scene) {
+        val MAX_NO_CELLS = 20
+        val otherCellTypes = cellTypes.filter { type -> cell.cellType != type }
 
-        mapBackIndices = Array(mapWidth * mapHeight * 8) { -1.0f }
-        mapFrontIndices = Array(mapWidth * mapHeight * 8) { -1.0f }
-        populateTilemap()
-
-        // Set position of start and exit
-        val startRoom = rooms[0]
-        val endRoom = rooms[0]
-
-        startPosition = startRoom.findNoneEdgeTile(random)!!
-        exitPosition = endRoom.findNoneEdgeTile(random)!!
-
-        val exitType = when (endRoom.type) {
-            DIRT_ROOM -> 0
-            COLD_DIRT_ROOM -> 2
-            KRAC_BASE -> 1
-            else -> throw IllegalStateException("Room type " + endRoom.type + " is not supported!")
-        }
-
-        val exitIndex = (exitPosition.x + exitPosition.y * mapWidth) * 8
-        mapBackIndices[exitIndex+2] = 2.toFloat()
-        mapBackIndices[exitIndex+2] = exitType.toFloat()
-
-        generateRooms(scene, healthBarSystem, healthBarMaterial)
-    }
-
-    private fun populateTilemap() {
-        for (room in rooms) {
-            val tileY = when (room.type) {
-                DIRT_ROOM -> 0
-                COLD_DIRT_ROOM -> 2
-                KRAC_BASE -> 1
-                else -> throw IllegalStateException("Not implemented!")
+        if (cell.cellType.hasConnectionBot && cell.botNeighbourCell == null) {
+            val viableCells = ArrayList<CellType>()
+            for (type in otherCellTypes) {
+                if (type.hasConnectionTop) {
+                    viableCells.add(type)
+                }
             }
 
-            for (tile in room.tiles) {
-                val index = (tile.x + tile.y * mapWidth) * 8
-                if (random.nextFloat() <= 0.1f) {
-                    mapBackIndices[index+2] = 7.0f
-                    mapBackIndices[index+3] = tileY.toFloat()
-                }
-                else {
-                    mapBackIndices[index+2] = 0.0f
-                    mapBackIndices[index+3] = tileY.toFloat()
+            if (viableCells.size > 0) {
+                val rndType = viableCells[random.nextInt(viableCells.size)]
+                val nbot = Cell(rndType, scene, tilemapMaterial)
+                cell.botNeighbourCell = nbot
+                nbot.topNeighbourCell = cell
+                currentLevelCells.add(nbot)
+
+                if (currentLevelCells.size < MAX_NO_CELLS) {
+                    createCellConnections(nbot, scene)
                 }
             }
         }
-
-        // Remove tiles that are now solid
-        for (room in rooms) {
-            val tilesToRemove = ArrayList<Vector2i>()
-            for (tile in room.tiles) {
-                val index = tile.x + tile.y * mapWidth
-                if (map[index] == 1) {
-                    tilesToRemove.add(tile)
+        else if (cell.cellType.hasConnectionTop && cell.topNeighbourCell == null) {
+            val viableCells = ArrayList<CellType>()
+            for (type in otherCellTypes) {
+                if (type.hasConnectionBot) {
+                    viableCells.add(type)
                 }
             }
 
-            for (tile in tilesToRemove) {
-                room.tiles.remove(tile)
-            }
-        }
-    }
+            if (viableCells.size > 0) {
+                val rndType = viableCells[random.nextInt(viableCells.size)]
+                val ntop = Cell(rndType, scene, tilemapMaterial)
+                cell.topNeighbourCell = ntop
+                ntop.botNeighbourCell = cell
+                currentLevelCells.add(ntop)
 
-    private fun buildRooms() {
-        rooms.clear()
-        val numRooms = random.nextInt(40) + 10
-        val maxW = mapWidth / 8
-        val maxH = mapHeight / 8
-
-        val roomAreaList = ArrayList<Vector4i>()
-        for (i in 0 until numRooms) {
-            var roomX = random.nextInt(mapWidth)
-            var roomY = random.nextInt(mapHeight)
-            val roomW = random.nextInt(maxW) + 10
-            val roomH = random.nextInt(maxH) + 10
-
-            if (roomX + roomW >= mapWidth) {
-                roomX = mapWidth - roomW - 1
-            }
-            if (roomY + roomH >= mapHeight) {
-                roomY = mapHeight - roomH - 1
-            }
-
-            roomAreaList.add(Vector4i(roomX, roomY,roomW,roomH))
-        }
-
-        var collision: Boolean
-        var iterationsCount = 0
-        do {
-            collision = false
-            for (area in roomAreaList) {
-                for (other in roomAreaList) {
-                    if (area != other) {
-                        if (area.x + area.z >= other.x && area.x <= other.x + other.z
-                        && area.y + area.w >= other.y && area.y <= other.y + other.w) {
-                            collision = true
-                            var dx = ((area.x+area.z/2) - (other.x+other.z/2)).sign
-                            var dy = ((area.y+area.w/2) - (other.y+other.w/2)).sign
-
-                            if (dx == 0 && dy == 0) {
-                                dx = -1
-                                dy = -1
-                            }
-
-                            if (area.x + dx in 0..(mapWidth - 1 - area.z)) {
-                                area.x += dx
-                            }
-
-                            if (area.y + dy in 0..(mapHeight - 1 - area.w)) {
-                                area.y += dy
-                            }
-
-                            if (other.x - dx in 0..(mapWidth - 1 - other.z)) {
-                                other.x -= dx
-                            }
-
-                            if (other.y - dy in 0..(mapHeight - 1 - other.w)) {
-                                other.y -= dy
-                            }
-                        }
-                    }
-                }
-            }
-            iterationsCount++
-
-            // If we arn't finished after 100 rounds - we should break
-            if (iterationsCount >= 100) {
-                break
-            }
-
-        } while (collision)
-
-        // If any rooms are still colliding at this point we want to remove them
-        val toRemove = ArrayList<Vector4i>()
-        for (area in roomAreaList) {
-            for (other in roomAreaList) {
-                if (area != other) {
-                    if (area.x + area.z >= other.x && area.x <= other.x + other.z
-                        && area.y + area.w >= other.y && area.y <= other.y + other.w
-                    ) {
-                        if (area.z*area.w < other.z*other.w) {
-                            toRemove.add(area)
-                        }
-                        else {
-                            toRemove.add(other)
-                        }
-                    }
+                if (currentLevelCells.size < MAX_NO_CELLS) {
+                    createCellConnections(ntop, scene)
                 }
             }
         }
-
-        for (area in toRemove) {
-            roomAreaList.remove(area)
-        }
-
-        for (area in roomAreaList) {
-            val tiles = ArrayList<Vector2i>()
-            var x = area.x
-            var y = area.y
-            for (i in 0 until area.z*area.w) {
-                tiles.add(Vector2i(x, y))
-                map[x + y * mapWidth] = 0
-                x += 1
-                if (x >= area.x + area.z) {
-                    x = area.x
-                    y += 1
+        else if (cell.cellType.hasConnectionLeft && cell.leftNeighbourCell == null) {
+            val viableCells = ArrayList<CellType>()
+            for (type in otherCellTypes) {
+                if (type.hasConnectionRight) {
+                    viableCells.add(type)
                 }
             }
 
-            val roomType = DIRT_ROOM//RoomTypes[random.nextInt(RoomTypes.size)]
-            val room = Room(tiles, area, roomType)
-            rooms.add(room)
-        }
+            if (viableCells.size > 0) {
+                val rndType = viableCells[random.nextInt(viableCells.size)]
+                val nleft = Cell(rndType, scene, tilemapMaterial)
+                cell.leftNeighbourCell = nleft
+                nleft.rightNeighbourCell = cell
+                currentLevelCells.add(nleft)
 
-        findNearestNeighbourOfRooms()
-        connectRooms()
-    }
-
-    private fun findNearestNeighbourOfRooms() {
-        for (room in rooms) {
-            while (room.neighbourRooms.size < 2) {
-                var nearestRoom: Room? = null
-                var shortestDist = Double.MAX_VALUE
-                for (otherRoom in rooms) {
-                    if (otherRoom == room || room.neighbourRooms.contains(otherRoom) || otherRoom.neighbourRooms.contains(room)) {
-                        continue
-                    }
-
-                    val dist = otherRoom.area.distance(room.area)
-                    if (dist < shortestDist) {
-                        shortestDist = dist
-                        nearestRoom = otherRoom
-                    }
-                }
-
-                if (nearestRoom != null) {
-                    room.neighbourRooms.add(nearestRoom)
-                }
-                else {
-                    break
+                if (currentLevelCells.size < MAX_NO_CELLS) {
+                    createCellConnections(nleft, scene)
                 }
             }
         }
-    }
-
-    private fun connectRooms() {
-        for (room in rooms) {
-            for (neighbour in room.neighbourRooms) {
-                var shortestLength = Int.MAX_VALUE
-                var firstTile = Vector2i(0,0)
-                var secondTile = Vector2i(0,0)
-
-                // Find the tile closest to the neighbour rooms center as a starting point
-                var ln = Int.MAX_VALUE
-                for (tile in room.tiles) {
-                    val dx = ((neighbour.area.x+neighbour.area.z)/2) - tile.x
-                    val dy = ((neighbour.area.y+neighbour.area.w)/2) - tile.y
-                    val k = dx*dx + dy*dy
-                    if (k < ln) {
-                        firstTile = tile
-                        ln = k
-                    }
-                }
-
-                // Find the tile in the neighbouring room which is closest to the selected
-                // tile
-                for (otherTile in neighbour.tiles) {
-                    val dx = otherTile.x - firstTile.x
-                    val dy = otherTile.y - firstTile.y
-                    val d = dx * dx + dy * dy
-
-                    if (d < shortestLength) {
-                        shortestLength = d
-                        secondTile = otherTile
-                    }
-                }
-
-                val dx = (secondTile.x - firstTile.x).sign
-                val dy = (secondTile.y - firstTile.y).sign
-
-                var x = firstTile.x
-                var y = firstTile.y
-
-                // Create a tunnel between the two rooms, but stop as soon as we hit a collision
-                // This happens in cases when there's another room in between the two neighbouring
-                // rooms
-                while (true) {
-                    var traversalDone = 0
-
-                    if (map[x + y * mapWidth] == 1) {
-                        map[x + y * mapWidth] = 0
-                        room.tiles.add(Vector2i(x,y))
-                    }
-
-                    if (x != secondTile.x) {
-                        if (y > 0) {
-                            if (map[x + (y - 1) * mapWidth] == 1) {
-                                map[x + (y - 1) * mapWidth] = 0
-                                room.tiles.add(Vector2i(x, y - 1))
-                            }
-                        }
-
-                        if (y < mapHeight - 1) {
-                            if (map[x + (y + 1) * mapWidth] == 1) {
-                                map[x + (y + 1) * mapWidth] = 0
-                                room.tiles.add(Vector2i(x, y + 1))
-                            }
-                        }
-                        x += dx
-                    }
-                    else {
-                        if (x > 0) {
-                            if (map[(x - 1) + y * mapWidth] == 1) {
-                                map[(x - 1) + y * mapWidth] = 0
-                                room.tiles.add(Vector2i(x - 1, y))
-                            }
-                        }
-
-                        if (x < mapWidth - 1) {
-                            if (map[(x + 1) + y * mapWidth] == 1) {
-                                map[(x + 1) + y * mapWidth] = 0
-                                room.tiles.add(Vector2i(x + 1, y))
-                            }
-                        }
-
-                        traversalDone += 1
-                        if (y != secondTile.y) {
-                            y += dy
-                        }
-                        else {
-                            traversalDone += 1
-                        }
-                    }
-
-                    if (traversalDone == 2) {
-                        break
-                    }
+        else if (cell.cellType.hasConnectionRight && cell.rightNeighbourCell == null) {
+            val viableCells = ArrayList<CellType>()
+            for (type in otherCellTypes) {
+                if (type.hasConnectionLeft) {
+                    viableCells.add(type)
                 }
             }
-        }
-    }
 
-    private fun generateRooms(scene: Scene, healthBarSystem: EntitySystem<HealthBar>, healthBarMaterial: Material) {
-        for (room in rooms) {
-            // Only generate enemies in the correct rooms
-            if (room.type.hasEnemies) {
-                val enemyDensity = room.tiles.size / 64
-                val numEnemies = random.nextInt(enemyDensity) + 1
+            if (viableCells.size > 0) {
+                val rndType = viableCells[random.nextInt(viableCells.size)]
+                val nright = Cell(rndType, scene, tilemapMaterial)
+                cell.rightNeighbourCell = nright
+                nright.leftNeighbourCell = cell
+                currentLevelCells.add(nright)
 
-                room.generateEnemiesInRoom(
-                    random,
-                    enemySystem,
-                    enemyMaterial,
-                    quadMesh,
-                    enemyAttackSystem,
-                    player,
-                    numEnemies,
-                    healthBarSystem,
-                    healthBarMaterial,
-                    enemyAttackMaterial,
-                    room.type.enemyTypes
-                )
-            }
-
-            val thisRoomContainerCount = room.tiles.size/72
-            room.generateContainersInRoom(random, thisRoomContainerCount, containerSystem, itemMaterial, quadMesh)
-
-            if (room.type.hasLights) {
-                val lightDensity = room.tiles.size / 48
-                val numLights = random.nextInt(lightDensity) + 1
-                room.generateLightsInRoom(
-                    scene,
-                    random,
-                    map,
-                    mapWidth,
-                    width,
-                    height,
-                    numLights,
-                    random.nextInt(10) == 1,
-                    torchSystem,
-                    itemMaterial,
-                    quadMesh
-                )
+                if (currentLevelCells.size < MAX_NO_CELLS) {
+                    createCellConnections(nright, scene)
+                }
             }
         }
     }

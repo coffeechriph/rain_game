@@ -204,9 +204,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         scene.activeCamera = camera
 
-        player.setPosition(level.getFirstTilePos())
         player.getMoveComponent()!!.update(0.0f, 0.0f)
-        level.switchCell(resourceFactory, scene, player.cellX, player.cellY)
 
         inventory = Inventory(player)
         player.inventory = inventory
@@ -233,7 +231,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
         }
 
         if (player.playerMovedCell) {
-            level.switchCell(resourceFactory, scene, player.cellX, player.cellY)
+            level.switchCell(player.movingDirection)
             player.playerMovedCell = false
         }
 
@@ -241,17 +239,6 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         if (inventory.visible) {
             inventory.update(input)
-        }
-
-        if (player.transform.x + player.cellX*level.width*64 >= level.exitPosition.x*64 - 32 && player.transform.x + player.cellX*level.width*64 <= level.exitPosition.x*64 + 32 &&
-                player.transform.y + player.cellY*level.height*64 >= level.exitPosition.y*64 - 32 && player.transform.y + player.cellY*level.height*64 <= level.exitPosition.y*64 + 32) {
-            player.currentLevel += 1
-            level.build(System.currentTimeMillis(), scene, healthBarSystem, healthMaterial)
-            player.setPosition(level.getFirstTilePos())
-            level.switchCell(resourceFactory, scene, player.cellX, player.cellY)
-
-            currentLevelText.string = "Current Level: ${player.currentLevel}"
-            currentLevelText.x = currentLevelText.w/2.0f
         }
     }
 }

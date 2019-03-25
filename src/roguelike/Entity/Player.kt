@@ -17,10 +17,6 @@ const val GLOBAL_ANIMATION_SPEED = 3.0f
 class Player : Entity() {
     class InputTimestamp(var direction: Direction, var time: Long)
     var playerMovedCell = false
-    var cellX = 0
-        private set
-    var cellY = 0
-        private set
     lateinit var inventory: Inventory
     lateinit var attack: Attack
     lateinit var renderComponent: RenderComponent
@@ -62,6 +58,7 @@ class Player : Entity() {
     var xpUntilNextLevel = 100
         private set
     var facingDirection = Direction.DOWN
+    var movingDirection = Direction.DOWN
 
     private val inputTimestamps = ArrayList<InputTimestamp>()
     private var lastDirection = Direction.DOWN
@@ -165,8 +162,6 @@ class Player : Entity() {
     }
 
     fun setPosition(pos: Vector2i) {
-        cellX = pos.x / 1280
-        cellY = pos.y / 768
         transform.x = pos.x.toFloat()%1280
         transform.y = pos.y.toFloat()%768
         getMoveComponent()!!.update(0.0f, 0.0f)
@@ -354,18 +349,22 @@ class Player : Entity() {
                 Direction.LEFT -> {
                     velX -= speed
                     animator.setAnimation("walk_left")
+                    movingDirection = Direction.LEFT
                 }
                 Direction.RIGHT -> {
                     velX += speed
                     animator.setAnimation("walk_right")
+                    movingDirection = Direction.RIGHT
                 }
                 Direction.UP -> {
                     velY -= speed
                     animator.setAnimation("walk_up")
+                    movingDirection = Direction.UP
                 }
                 Direction.DOWN -> {
                     velY += speed
                     animator.setAnimation("walk_down")
+                    movingDirection = Direction.DOWN
                 }
                 Direction.NONE -> {}
             }
@@ -492,41 +491,29 @@ class Player : Entity() {
     private fun keepPlayerWithinBorder(velX: Float, velY: Float) {
         val transform = transform
         if (transform.x < 0 && velX < 0.0f) {
-            if (cellX > 0) {
-                transform.x = 1270.0f
-                getMoveComponent()!!.update(velX, velY)
+            transform.x = 1270.0f
+            getMoveComponent()!!.update(velX, velY)
 
-                playerMovedCell = true
-                cellX -= 1
-            }
+            playerMovedCell = true
         }
         else if (transform.x > 1280 && velX > 0.0f) {
-            if (cellX < level.maxCellX) {
-                transform.x = 10.0f
-                getMoveComponent()!!.update(velX, velY)
+            transform.x = 10.0f
+            getMoveComponent()!!.update(velX, velY)
 
-                playerMovedCell = true
-                cellX += 1
-            }
+            playerMovedCell = true
         }
 
         if (transform.y < 0 && velY < 0.0f) {
-            if (cellY > 0) {
-                transform.y = 758.0f
-                getMoveComponent()!!.update(velX, velY)
+            transform.y = 758.0f
+            getMoveComponent()!!.update(velX, velY)
 
-                playerMovedCell = true
-                cellY -= 1
-            }
+            playerMovedCell = true
         }
         else if (transform.y > 768 && velY > 0.0f) {
-            if (cellY < level.maxCellY) {
-                transform.y = 10.0f
-                getMoveComponent()!!.update(velX, velY)
+            transform.y = 10.0f
+            getMoveComponent()!!.update(velX, velY)
 
-                playerMovedCell = true
-                cellY += 1
-            }
+            playerMovedCell = true
         }
     }
 }
