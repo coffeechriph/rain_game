@@ -200,10 +200,11 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         // TODO: Constant window dimensions
         level.create(resourceFactory, scene, 8960 / 64, 5376 / 64, 1280 / 64, 768 / 64)
-        level.buildFirstRoom(scene)
 
         scene.activeCamera = camera
 
+        player.transform.x = 720.0f
+        player.transform.y = 384.0f
         player.getMoveComponent()!!.update(0.0f, 0.0f)
 
         inventory = Inventory(player)

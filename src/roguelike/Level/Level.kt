@@ -58,12 +58,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private val activeEnemies = ArrayList<Enemy>()
     private val activeContainers = ArrayList<Container>()
     private val activeLightSources = ArrayList<LightSource>()
-    private val collisionBoxes = ArrayList<Vector4i>()
+    private lateinit var collisionBoxes: List<Vector4i>
     lateinit var quadMesh: Mesh
 
-    private var cellTypes = ArrayList<CellType>()
-    private var currentLevelCells = ArrayList<Cell>()
+    private lateinit var currentLevelCells: List<Cell>
     private var currentCell: Cell? = null
+    private lateinit var levelBuilder: LevelBuilder
 
     fun lightIntensityAt(x: Float, y: Float): Float {
         var tx = (x / 64.0f).toInt()
@@ -97,7 +97,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         this.width = width
         this.height = height
         firstBuild = true
-        loadAvailableCellTypes()
 
         maxCellX = mapWidth / width
         maxCellY = mapHeight / height
@@ -157,7 +156,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
         enemyAttackSystem = scene.newSystem(enemyAttackMaterial)
 
-        collisionSystem = scene.newSystem(null)
+        collisionSystem = scene.newSystem(itemMaterial)
         containerSystem = scene.newSystem(itemMaterial)
         levelItemSystem = scene.newSystem(itemMaterial)
         xpBallSystem = scene.newSystem(itemMaterial)
@@ -189,24 +188,12 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         enemyTargetEntityRenderer.visible = false
         enemyTargetEntityRenderer.textureTileOffset.set(4,15)
         enemyTargetEntityRenderer.addCustomUniformData(0, 1.0f)
-    }
 
-    fun loadAvailableCellTypes() {
-        if (!File("./data/cells").exists()) {
-            assertion("/data/cells directory does not exist!")
-        }
-
-        val directory = File("./data/cells")
-        for (file in directory.listFiles()) {
-            if (file.isDirectory) {
-                continue
-            }
-
-            val loadedScene = JsonSceneLoader().load(file.absolutePath)
-            val cell = CellType(width, height)
-            cell.create(loadedScene)
-            cellTypes.add(cell)
-        }
+        levelBuilder = LevelBuilder(width, height)
+        levelBuilder.loadCellTypes()
+        currentLevelCells = levelBuilder.createLevel(random, scene, tilemapMaterial)
+        currentCell = currentLevelCells[0]
+        collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
     }
 
     fun update(input: Input) {
@@ -526,11 +513,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     fun switchCell(dir: Direction) {
         when(dir) {
             Direction.LEFT -> {
-                println("MOVING LEFT")
                 if (currentCell!!.leftNeighbourCell != null) {
-                    println("SWITCHING LEFT")
                     currentCell!!.visible = false
                     currentCell = currentCell!!.leftNeighbourCell
+                    collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
                     currentCell!!.visible = true
                 }
             }
@@ -538,6 +524,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 if (currentCell!!.rightNeighbourCell != null) {
                     currentCell!!.visible = false
                     currentCell = currentCell!!.rightNeighbourCell
+                    collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
                     currentCell!!.visible = true
                 }
             }
@@ -545,6 +532,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 if (currentCell!!.topNeighbourCell != null) {
                     currentCell!!.visible = false
                     currentCell = currentCell!!.topNeighbourCell
+                    collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
                     currentCell!!.visible = true
                 }
             }
@@ -552,6 +540,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 if (currentCell!!.botNeighbourCell != null) {
                     currentCell!!.visible = false
                     currentCell = currentCell!!.botNeighbourCell
+                    collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
                     currentCell!!.visible = true
                 }
             }
@@ -695,154 +684,5 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 }
             }
         }
-    }
-
-    fun buildFirstRoom(scene: Scene) {
-        val firstCellType = cellTypes.stream().filter { type -> type.hasConnectionTop && type.hasConnectionRight && type.hasConnectionLeft && type.hasConnectionBot }.findFirst().get()
-        val cell = Cell(firstCellType, scene, tilemapMaterial)
-        currentLevelCells.add(cell)
-        createCellConnections(cell, scene)
-        currentCell = cell
-    }
-
-    private fun createCellConnections(cell: Cell, scene: Scene) {
-        val MAX_NO_CELLS = 20
-        val otherCellTypes = cellTypes.filter { type -> type != cell.cellType }
-
-        if (cell.cellType.hasConnectionBot && cell.botNeighbourCell == null) {
-            val viableCells = ArrayList<CellType>()
-            for (type in otherCellTypes) {
-                if (type.hasConnectionTop) {
-                    if (currentLevelCells.size < MAX_NO_CELLS) {
-                        viableCells.add(type)
-                    }
-                    else if (type.singleConnection()){
-                        viableCells.add(type)
-                    }
-                }
-            }
-
-            if (viableCells.size > 0) {
-                val rndType = viableCells[random.nextInt(viableCells.size)]
-                var nbot = findCellAtMapPos(cell.mapPosX, cell.mapPosY + 1)
-                if (nbot == null) {
-                    nbot = Cell(rndType, scene, tilemapMaterial)
-                    nbot.mapPosX = cell.mapPosX
-                    nbot.mapPosY = cell.mapPosY + 1
-                    currentLevelCells.add(nbot)
-                }
-
-                cell.botNeighbourCell = nbot
-                nbot.topNeighbourCell = cell
-
-                if (!rndType.singleConnection()) {
-                    createCellConnections(nbot, scene)
-                }
-            }
-        }
-
-        if (cell.cellType.hasConnectionTop && cell.topNeighbourCell == null) {
-            val viableCells = ArrayList<CellType>()
-            for (type in otherCellTypes) {
-                if (type.hasConnectionBot) {
-                    if (currentLevelCells.size < MAX_NO_CELLS) {
-                        viableCells.add(type)
-                    }
-                    else if (type.singleConnection()){
-                        viableCells.add(type)
-                    }
-                }
-            }
-
-            if (viableCells.size > 0) {
-                val rndType = viableCells[random.nextInt(viableCells.size)]
-                var ntop = findCellAtMapPos(cell.mapPosX, cell.mapPosY - 1)
-                if (ntop == null) {
-                    ntop = Cell(rndType, scene, tilemapMaterial)
-                    ntop.mapPosX = cell.mapPosX
-                    ntop.mapPosY = cell.mapPosY - 1
-                    currentLevelCells.add(ntop)
-                }
-
-                cell.topNeighbourCell = ntop
-                ntop.botNeighbourCell = cell
-
-                if (!rndType.singleConnection()) {
-                    createCellConnections(ntop, scene)
-                }
-            }
-        }
-
-        if (cell.cellType.hasConnectionLeft && cell.leftNeighbourCell == null) {
-            val viableCells = ArrayList<CellType>()
-            for (type in otherCellTypes) {
-                if (type.hasConnectionRight) {
-                    if (currentLevelCells.size < MAX_NO_CELLS) {
-                        viableCells.add(type)
-                    }
-                    else if (type.singleConnection()){
-                        viableCells.add(type)
-                    }
-                }
-            }
-
-            if (viableCells.size > 0) {
-                val rndType = viableCells[random.nextInt(viableCells.size)]
-                var nleft = findCellAtMapPos(cell.mapPosX - 1, cell.mapPosY)
-                if (nleft == null) {
-                    nleft = Cell(rndType, scene, tilemapMaterial)
-                    nleft.mapPosX = cell.mapPosX - 1
-                    nleft.mapPosY = cell.mapPosY
-                    currentLevelCells.add(nleft)
-                }
-                cell.leftNeighbourCell = nleft
-                nleft.rightNeighbourCell = cell
-
-                if (!rndType.singleConnection()) {
-                    createCellConnections(nleft, scene)
-                }
-            }
-        }
-
-        if (cell.cellType.hasConnectionRight && cell.rightNeighbourCell == null) {
-            val viableCells = ArrayList<CellType>()
-            for (type in otherCellTypes) {
-                if (type.hasConnectionLeft) {
-                    if (currentLevelCells.size < MAX_NO_CELLS) {
-                        viableCells.add(type)
-                    }
-                    else if (type.singleConnection()){
-                        viableCells.add(type)
-                    }
-                }
-            }
-
-            if (viableCells.size > 0) {
-                val rndType = viableCells[random.nextInt(viableCells.size)]
-                var nright = findCellAtMapPos(cell.mapPosX + 1, cell.mapPosY)
-                if (nright == null) {
-                    nright = Cell(rndType, scene, tilemapMaterial)
-                    nright.mapPosX = cell.mapPosX - 1
-                    nright.mapPosY = cell.mapPosY
-                    currentLevelCells.add(nright)
-                }
-                cell.rightNeighbourCell = nright
-                nright.leftNeighbourCell = cell
-
-                if (!rndType.singleConnection()) {
-                    createCellConnections(nright, scene)
-                }
-            }
-        }
-    }
-
-    private fun findCellAtMapPos(x: Int, y: Int): Cell? {
-        for (cell in currentLevelCells) {
-            if (cell.mapPosX == x && cell.mapPosY == y) {
-                return cell
-            }
-        }
-
-        return null
     }
 }
