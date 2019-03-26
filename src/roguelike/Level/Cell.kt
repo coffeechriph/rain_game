@@ -11,6 +11,8 @@ class Cell(var cellType: CellType, scene: Scene, material: Material) {
     val layers = ArrayList<Tilemap>()
     val enemies = ArrayList<Enemy>()
     val containers = ArrayList<Container>()
+    var mapPosX: Int = 0
+    var mapPosY: Int = 0
     var leftNeighbourCell: Cell? = null
     var rightNeighbourCell: Cell? = null
     var topNeighbourCell: Cell? = null

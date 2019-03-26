@@ -698,7 +698,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     }
 
     fun buildFirstRoom(scene: Scene) {
-        val firstCellType = cellTypes[random.nextInt(cellTypes.size)]
+        val firstCellType = cellTypes.stream().filter { type -> type.hasConnectionTop && type.hasConnectionRight && type.hasConnectionLeft && type.hasConnectionBot }.findFirst().get()
         val cell = Cell(firstCellType, scene, tilemapMaterial)
         currentLevelCells.add(cell)
         createCellConnections(cell, scene)
@@ -707,87 +707,142 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
 
     private fun createCellConnections(cell: Cell, scene: Scene) {
         val MAX_NO_CELLS = 20
-        val otherCellTypes = cellTypes.filter { type -> cell.cellType != type }
+        val otherCellTypes = cellTypes.filter { type -> type != cell.cellType }
 
         if (cell.cellType.hasConnectionBot && cell.botNeighbourCell == null) {
             val viableCells = ArrayList<CellType>()
             for (type in otherCellTypes) {
                 if (type.hasConnectionTop) {
-                    viableCells.add(type)
+                    if (currentLevelCells.size < MAX_NO_CELLS) {
+                        viableCells.add(type)
+                    }
+                    else if (type.singleConnection()){
+                        viableCells.add(type)
+                    }
                 }
             }
 
             if (viableCells.size > 0) {
                 val rndType = viableCells[random.nextInt(viableCells.size)]
-                val nbot = Cell(rndType, scene, tilemapMaterial)
+                var nbot = findCellAtMapPos(cell.mapPosX, cell.mapPosY + 1)
+                if (nbot == null) {
+                    nbot = Cell(rndType, scene, tilemapMaterial)
+                    nbot.mapPosX = cell.mapPosX
+                    nbot.mapPosY = cell.mapPosY + 1
+                    currentLevelCells.add(nbot)
+                }
+
                 cell.botNeighbourCell = nbot
                 nbot.topNeighbourCell = cell
-                currentLevelCells.add(nbot)
 
-                if (currentLevelCells.size < MAX_NO_CELLS) {
+                if (!rndType.singleConnection()) {
                     createCellConnections(nbot, scene)
                 }
             }
         }
-        else if (cell.cellType.hasConnectionTop && cell.topNeighbourCell == null) {
+
+        if (cell.cellType.hasConnectionTop && cell.topNeighbourCell == null) {
             val viableCells = ArrayList<CellType>()
             for (type in otherCellTypes) {
                 if (type.hasConnectionBot) {
-                    viableCells.add(type)
+                    if (currentLevelCells.size < MAX_NO_CELLS) {
+                        viableCells.add(type)
+                    }
+                    else if (type.singleConnection()){
+                        viableCells.add(type)
+                    }
                 }
             }
 
             if (viableCells.size > 0) {
                 val rndType = viableCells[random.nextInt(viableCells.size)]
-                val ntop = Cell(rndType, scene, tilemapMaterial)
+                var ntop = findCellAtMapPos(cell.mapPosX, cell.mapPosY - 1)
+                if (ntop == null) {
+                    ntop = Cell(rndType, scene, tilemapMaterial)
+                    ntop.mapPosX = cell.mapPosX
+                    ntop.mapPosY = cell.mapPosY - 1
+                    currentLevelCells.add(ntop)
+                }
+
                 cell.topNeighbourCell = ntop
                 ntop.botNeighbourCell = cell
-                currentLevelCells.add(ntop)
 
-                if (currentLevelCells.size < MAX_NO_CELLS) {
+                if (!rndType.singleConnection()) {
                     createCellConnections(ntop, scene)
                 }
             }
         }
-        else if (cell.cellType.hasConnectionLeft && cell.leftNeighbourCell == null) {
+
+        if (cell.cellType.hasConnectionLeft && cell.leftNeighbourCell == null) {
             val viableCells = ArrayList<CellType>()
             for (type in otherCellTypes) {
                 if (type.hasConnectionRight) {
-                    viableCells.add(type)
+                    if (currentLevelCells.size < MAX_NO_CELLS) {
+                        viableCells.add(type)
+                    }
+                    else if (type.singleConnection()){
+                        viableCells.add(type)
+                    }
                 }
             }
 
             if (viableCells.size > 0) {
                 val rndType = viableCells[random.nextInt(viableCells.size)]
-                val nleft = Cell(rndType, scene, tilemapMaterial)
+                var nleft = findCellAtMapPos(cell.mapPosX - 1, cell.mapPosY)
+                if (nleft == null) {
+                    nleft = Cell(rndType, scene, tilemapMaterial)
+                    nleft.mapPosX = cell.mapPosX - 1
+                    nleft.mapPosY = cell.mapPosY
+                    currentLevelCells.add(nleft)
+                }
                 cell.leftNeighbourCell = nleft
                 nleft.rightNeighbourCell = cell
-                currentLevelCells.add(nleft)
 
-                if (currentLevelCells.size < MAX_NO_CELLS) {
+                if (!rndType.singleConnection()) {
                     createCellConnections(nleft, scene)
                 }
             }
         }
-        else if (cell.cellType.hasConnectionRight && cell.rightNeighbourCell == null) {
+
+        if (cell.cellType.hasConnectionRight && cell.rightNeighbourCell == null) {
             val viableCells = ArrayList<CellType>()
             for (type in otherCellTypes) {
                 if (type.hasConnectionLeft) {
-                    viableCells.add(type)
+                    if (currentLevelCells.size < MAX_NO_CELLS) {
+                        viableCells.add(type)
+                    }
+                    else if (type.singleConnection()){
+                        viableCells.add(type)
+                    }
                 }
             }
 
             if (viableCells.size > 0) {
                 val rndType = viableCells[random.nextInt(viableCells.size)]
-                val nright = Cell(rndType, scene, tilemapMaterial)
+                var nright = findCellAtMapPos(cell.mapPosX + 1, cell.mapPosY)
+                if (nright == null) {
+                    nright = Cell(rndType, scene, tilemapMaterial)
+                    nright.mapPosX = cell.mapPosX - 1
+                    nright.mapPosY = cell.mapPosY
+                    currentLevelCells.add(nright)
+                }
                 cell.rightNeighbourCell = nright
                 nright.leftNeighbourCell = cell
-                currentLevelCells.add(nright)
 
-                if (currentLevelCells.size < MAX_NO_CELLS) {
+                if (!rndType.singleConnection()) {
                     createCellConnections(nright, scene)
                 }
             }
         }
+    }
+
+    private fun findCellAtMapPos(x: Int, y: Int): Cell? {
+        for (cell in currentLevelCells) {
+            if (cell.mapPosX == x && cell.mapPosY == y) {
+                return cell
+            }
+        }
+
+        return null
     }
 }
