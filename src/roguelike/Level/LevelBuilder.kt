@@ -166,7 +166,7 @@ class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
                 var nright = findCellAtMapPos(cell.mapPosX + 1, cell.mapPosY)
                 if (nright == null) {
                     nright = Cell(rndType, scene, tilemapMaterial)
-                    nright.mapPosX = cell.mapPosX - 1
+                    nright.mapPosX = cell.mapPosX + 1
                     nright.mapPosY = cell.mapPosY
                     currentLevelCells.add(nright)
                 }
