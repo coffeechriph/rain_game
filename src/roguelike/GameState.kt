@@ -17,6 +17,7 @@ import roguelike.Entity.HealthBar
 import roguelike.Entity.Inventory
 import roguelike.Entity.Player
 import roguelike.Level.Level
+import roguelike.Level.TILE_WIDTH
 
 class GameState(stateManager: StateManager): State(stateManager) {
     lateinit var quadMesh: Mesh
@@ -56,11 +57,11 @@ class GameState(stateManager: StateManager): State(stateManager) {
 
         mobTexture = resourceFactory.buildTexture2d()
                 .withName("mobTexture")
-                .fromImageFile("./data/textures/dwarf.png")
+                .fromImageFile("./data/textures/dwarf_tiny.png")
                 .withFilter(TextureFilter.NEAREST)
                 .build()
 
-        mobTexture.setTiledTexture(16,16)
+        mobTexture.setTiledTexture(8, 8)
         mobMaterial = resourceFactory.buildMaterial()
                 .withName("mobMaterial")
                 .withVertexShader("./data/shaders/basic.vert.spv")
@@ -199,7 +200,9 @@ class GameState(stateManager: StateManager): State(stateManager) {
         healthBarSystem = scene.newSystem(healthMaterial)
 
         // TODO: Constant window dimensions
-        level.create(resourceFactory, scene, 8960 / 64, 5376 / 64, 1280 / 64, 768 / 64)
+        level.create(resourceFactory, scene, (8960 / TILE_WIDTH).toInt(),
+            (5376 / TILE_WIDTH).toInt(), (1280 / TILE_WIDTH).toInt(), (768 / TILE_WIDTH).toInt()
+        )
 
         scene.activeCamera = camera
 

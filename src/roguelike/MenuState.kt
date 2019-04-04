@@ -14,6 +14,7 @@ import rain.api.gfx.TextureFilter
 import rain.api.gui.v2.*
 import rain.api.scene.Camera
 import rain.api.scene.Scene
+import roguelike.Level.TILE_WIDTH
 
 class MenuState(stateManager: StateManager): State(stateManager) {
     private var camera = Camera(1000.0f, Vector2i(1280, 768))

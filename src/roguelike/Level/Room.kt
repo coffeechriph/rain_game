@@ -145,7 +145,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             enemyEntity.healthBar.transform.sx = 60.0f
             enemyEntity.healthBar.transform.sy = 7.0f
 
-            enemyEntity.setPosition(Vector2i(p.x*64, p.y*64))
+            enemyEntity.setPosition(Vector2i(p.x*TILE_WIDTH.toInt(), p.y*TILE_WIDTH.toInt()))
             enemies.add(enemyEntity)
         }
     }
@@ -162,7 +162,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                     .attachRenderComponent(containerMaterial, quadMesh)
                     .build()
 
-            container.setPosition(Vector2i(tile.x*64 + 32, tile.y*64 + 32))
+            container.setPosition(Vector2i(tile.x*TILE_WIDTH.toInt() + 32, tile.y*TILE_WIDTH.toInt() + 32))
             container.getRenderComponents()[0].visible = false
             containers.add(container)
         }
@@ -190,7 +190,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 torchSystem.newEntity(et)
                         .attachRenderComponent(torchMaterial, quadMesh)
                         .build()
-                et.transform.setPosition((tx*64 + 32).toFloat(), (ty*64 - 32).toFloat(), 18.0f)
+                et.transform.setPosition((tx*TILE_WIDTH + 32).toFloat(), (ty*TILE_WIDTH - 32).toFloat(), 18.0f)
                 et.transform.sx = 24.0f
                 et.transform.sy = 24.0f
                 emitter.transform.parentTransform = et.transform
@@ -220,9 +220,9 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
                 torchSystem.newEntity(et)
                         .build()
-                et.transform.setPosition(((tx*64) + 32).toFloat(), ((ty*64) - 32).toFloat(), 18.0f)
-                et.transform.sx = 64.0f
-                et.transform.sy = 64.0f
+                et.transform.setPosition(((tx*TILE_WIDTH) + 32).toFloat(), ((ty*TILE_WIDTH) - 32).toFloat(), 18.0f)
+                et.transform.sx = TILE_WIDTH
+                et.transform.sy = TILE_WIDTH
                 emitter.transform.parentTransform = et.transform
                 this.campfire.add(et)
             }

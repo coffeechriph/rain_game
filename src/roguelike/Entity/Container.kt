@@ -6,6 +6,7 @@ import rain.api.components.Transform
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
+import roguelike.Level.TILE_WIDTH
 
 class Container(private val containerType: Int, val numItems: Int) : Entity() {
     var open = false
@@ -17,7 +18,7 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
     fun setPosition(pos: Vector2i) {
         val transform = transform!!
         transform.z = 2.0f + transform.y * 0.001f
-        transform.setScale(64.0f, 64.0f)
+        transform.setScale(TILE_WIDTH, TILE_WIDTH)
         cellX = pos.x / 1280
         cellY = pos.y / 768
         transform.x = (pos.x%1280).toFloat()

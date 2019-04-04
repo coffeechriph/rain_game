@@ -33,8 +33,8 @@ class Cell(var cellType: CellType, scene: Scene, material: Material) {
                     material,
                     map.tileNumX,
                     map.tileNumY,
-                    map.tileWidth,
-                    map.tileHeight
+                    TILE_WIDTH,
+                    TILE_WIDTH
                 )
 
                 for (group in layer.mapLayerTileGroup) {

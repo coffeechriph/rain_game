@@ -42,7 +42,7 @@ class CellType(
 
         for (mapDefinition in sceneDefinition.map) {
             if (mapDefinition.tileNumX != numTileX || mapDefinition.tileNumY != numTileY) {
-                assertion("The size of the map must be ${numTileX}x$numTileY but is ${mapDefinition.tileNumX}x${mapDefinition.tileNumY}")
+               // assertion("The size of the map must be ${numTileX}x$numTileY but is ${mapDefinition.tileNumX}x${mapDefinition.tileNumY}")
             }
 
             for (layer in mapDefinition.layers) {

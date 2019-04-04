@@ -11,6 +11,7 @@ import rain.api.gfx.Material
 import rain.api.gfx.Mesh
 import rain.api.scene.Scene
 import roguelike.Level.Level
+import roguelike.Level.TILE_WIDTH
 import java.util.*
 
 const val GLOBAL_ANIMATION_SPEED = 3.0f
@@ -59,6 +60,9 @@ class Player : Entity() {
         private set
     var facingDirection = Direction.DOWN
     var movingDirection = Direction.DOWN
+
+    private var attackInRowCount = 0
+    private var attackTimeout = 0.0f
 
     private val inputTimestamps = ArrayList<InputTimestamp>()
     private var lastDirection = Direction.DOWN
@@ -171,7 +175,7 @@ class Player : Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         renderComponent = getRenderComponents()[0]
         animator = getAnimatorComponent()[0]
-        transform.setScale(64.0f,64.0f)
+        transform.setScale(32.0f,32.0f)
 
         animator.addAnimation("idle_down", 0, 0, 0, 0.0f)
         animator.addAnimation("walk_down", 0, 4, 0, GLOBAL_ANIMATION_SPEED)
@@ -179,11 +183,23 @@ class Player : Entity() {
         animator.addAnimation("idle_right", 0, 0, 1, 0.0f)
         animator.addAnimation("walk_right", 0, 4, 1, GLOBAL_ANIMATION_SPEED)
 
-        animator.addAnimation("idle_left", 0, 0, 2, 0.0f)
-        animator.addAnimation("walk_left", 0, 4, 2, GLOBAL_ANIMATION_SPEED)
+        animator.addAnimation("idle_up", 0, 0, 2, 0.0f)
+        animator.addAnimation("walk_up", 0, 4, 2, GLOBAL_ANIMATION_SPEED)
 
-        animator.addAnimation("idle_up", 0, 0, 3, 0.0f)
-        animator.addAnimation("walk_up", 0, 4, 3, GLOBAL_ANIMATION_SPEED)
+        animator.addAnimation("idle_left", 0, 0, 3, 0.0f)
+        animator.addAnimation("walk_left", 0, 4, 3, GLOBAL_ANIMATION_SPEED)
+
+        animator.addAnimation("attack1_down", 0, 4, 4, GLOBAL_ANIMATION_SPEED * 10.0f)
+        animator.addAnimation("attack2_down", 0, 4, 5, GLOBAL_ANIMATION_SPEED * 10.0f)
+
+        animator.addAnimation("attack1_up", 0, 4, 6, GLOBAL_ANIMATION_SPEED * 10.0f)
+        animator.addAnimation("attack2_up", 0, 4, 7, GLOBAL_ANIMATION_SPEED * 10.0f)
+
+        animator.addAnimation("attack1_right", 0, 4, 8, GLOBAL_ANIMATION_SPEED * 10.0f)
+        animator.addAnimation("attack2_right", 0, 4, 9, GLOBAL_ANIMATION_SPEED * 10.0f)
+
+        animator.addAnimation("attack1_left", 0, 4, 10, GLOBAL_ANIMATION_SPEED * 10.0f)
+        animator.addAnimation("attack2_left", 0, 4, 11, GLOBAL_ANIMATION_SPEED * 10.0f)
         animator.setAnimation("idle_down")
 
         attack = Attack(transform)
@@ -255,13 +271,13 @@ class Player : Entity() {
             val shake = Math.sin(damageShake.toDouble() * Math.PI * 32).toFloat() * 3
 
             if (damagePushVelX < 0.0f || damagePushVelX > 0.0f) {
-                if (!level.collides(transform.x + damagePushVelX, transform.y, 64.0f, 64.0f)) {
+                if (!level.collides(transform.x + damagePushVelX, transform.y, TILE_WIDTH, TILE_WIDTH)) {
                     getMoveComponent()!!.update(damagePushVelX, 0.0f)
                     isStill = false
                 }
             }
             else if (damagePushVelY < 0.0f || damagePushVelY > 0.0f) {
-                if (!level.collides(transform.x, transform.y + damagePushVelY, 64.0f, 64.0f)) {
+                if (!level.collides(transform.x, transform.y + damagePushVelY, TILE_WIDTH, TILE_WIDTH)) {
                     getMoveComponent()!!.update(0.0f, damagePushVelY)
                     isStill = false
                 }
@@ -286,12 +302,6 @@ class Player : Entity() {
 
         if (!inventory.visible) {
             setDirectionBasedOnInput(input)
-            if (attack.isReady()) {
-                if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
-                    attack.attack(facingDirection)
-                    stopMovement = 0.1f
-                }
-            }
         }
 
         movement()
@@ -306,7 +316,7 @@ class Player : Entity() {
             facingDirection = lastDirection
         }
 
-        if (inputTimestamps.size <= 0) {
+        if (attackTimeout <= 0.0f && inputTimestamps.size <= 0) {
             when (facingDirection) {
                 Direction.LEFT  -> animator.setAnimation("idle_left")
                 Direction.RIGHT -> animator.setAnimation("idle_right")
@@ -370,11 +380,11 @@ class Player : Entity() {
             }
 
             val transform = transform
-            if (level.collides(transform.x + velX, transform.y, 64.0f, 64.0f)) {
+            if (level.collides(transform.x + velX, transform.y, TILE_WIDTH, TILE_WIDTH)) {
                 velX = 0.0f
             }
 
-            if (level.collides(transform.x, transform.y + velY, 64.0f, 64.0f)) {
+            if (level.collides(transform.x, transform.y + velY, TILE_WIDTH, TILE_WIDTH)) {
                 velY = 0.0f
             }
 
@@ -395,11 +405,11 @@ class Player : Entity() {
                 }
 
                 val transform = transform
-                if (level.collides(transform.x + velX, transform.y, 64.0f, 64.0f)) {
+                if (level.collides(transform.x + velX, transform.y, TILE_WIDTH, TILE_WIDTH)) {
                     velX = 0.0f
                 }
 
-                if (level.collides(transform.x, transform.y + velY, 64.0f, 64.0f)) {
+                if (level.collides(transform.x, transform.y + velY, TILE_WIDTH, TILE_WIDTH)) {
                     velY = 0.0f
                 }
 
@@ -453,28 +463,66 @@ class Player : Entity() {
             }
         }
 
-        if (input.keyState(Input.Key.KEY_LEFT) == Input.InputState.PRESSED) {
-            inputTimestamps.add(InputTimestamp(Direction.LEFT, System.currentTimeMillis()))
-        } else if (input.keyState(Input.Key.KEY_LEFT) == Input.InputState.RELEASED) {
-            removeInputDirection(Direction.LEFT)
+        if (attackTimeout > 0.0f) {
+            val moveFactor = 5.0f
+            when(facingDirection) {
+                Direction.LEFT -> getMoveComponent()!!.update(-moveFactor, 0.0f)
+                Direction.RIGHT -> getMoveComponent()!!.update(moveFactor, 0.0f)
+                Direction.UP -> getMoveComponent()!!.update(0.0f, -moveFactor)
+                Direction.DOWN -> getMoveComponent()!!.update(0.0f, moveFactor)
+            }
+
+            attackTimeout -= 1.0f / 60.0f / 8.0f
+
+            if (attackTimeout <= 1.0f / 60.0f / 2.0f) {
+                getMoveComponent()!!.update(0.0f, 0.0f)
+            }
         }
 
-        if (input.keyState(Input.Key.KEY_RIGHT) == Input.InputState.PRESSED) {
-            inputTimestamps.add(InputTimestamp(Direction.RIGHT, System.currentTimeMillis()))
-        } else if (input.keyState(Input.Key.KEY_RIGHT) == Input.InputState.RELEASED) {
-            removeInputDirection(Direction.RIGHT)
-        }
+        if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
+            inputTimestamps.clear()
+            getMoveComponent()!!.update(0.0f, 0.0f)
 
-        if (input.keyState(Input.Key.KEY_UP) == Input.InputState.PRESSED) {
-            inputTimestamps.add(InputTimestamp(Direction.UP, System.currentTimeMillis()))
-        } else if (input.keyState(Input.Key.KEY_UP) == Input.InputState.RELEASED) {
-            removeInputDirection(Direction.UP)
-        }
+            if (attackTimeout <= 0.0f) {
+                attackInRowCount += 1
+                attackTimeout = 1.0f / 60.0f
 
-        if (input.keyState(Input.Key.KEY_DOWN) == Input.InputState.PRESSED) {
-            inputTimestamps.add(InputTimestamp(Direction.DOWN, System.currentTimeMillis()))
-        } else if (input.keyState(Input.Key.KEY_DOWN) == Input.InputState.RELEASED) {
-            removeInputDirection(Direction.DOWN)
+                when (attackInRowCount) {
+                    1 -> animator.setAnimation("attack1_" + facingDirection.name.toLowerCase())
+                    2 -> animator.setAnimation("attack2_" + facingDirection.name.toLowerCase())
+                    3 -> animator.setAnimation("attack1_" + facingDirection.name.toLowerCase())
+                }
+                if (attackInRowCount >= 3) {
+                    attackInRowCount = 0
+                    attackTimeout = 2.0f / 60.0f
+                    damageShake = 1.0f
+                }
+            }
+        }
+        else {
+            if (input.keyState(Input.Key.KEY_LEFT) == Input.InputState.PRESSED) {
+                inputTimestamps.add(InputTimestamp(Direction.LEFT, System.currentTimeMillis()))
+            } else if (input.keyState(Input.Key.KEY_LEFT) == Input.InputState.RELEASED) {
+                removeInputDirection(Direction.LEFT)
+            }
+
+            if (input.keyState(Input.Key.KEY_RIGHT) == Input.InputState.PRESSED) {
+                inputTimestamps.add(InputTimestamp(Direction.RIGHT, System.currentTimeMillis()))
+            } else if (input.keyState(Input.Key.KEY_RIGHT) == Input.InputState.RELEASED) {
+                removeInputDirection(Direction.RIGHT)
+            }
+
+            if (input.keyState(Input.Key.KEY_UP) == Input.InputState.PRESSED) {
+                inputTimestamps.add(InputTimestamp(Direction.UP, System.currentTimeMillis()))
+            } else if (input.keyState(Input.Key.KEY_UP) == Input.InputState.RELEASED) {
+                removeInputDirection(Direction.UP)
+            }
+
+            if (input.keyState(Input.Key.KEY_DOWN) == Input.InputState.PRESSED) {
+                inputTimestamps.add(InputTimestamp(Direction.DOWN, System.currentTimeMillis()))
+            } else if (input.keyState(Input.Key.KEY_DOWN) == Input.InputState.RELEASED) {
+                removeInputDirection(Direction.DOWN)
+            }
         }
     }
 

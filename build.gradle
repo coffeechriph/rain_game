@@ -1,6 +1,7 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.11'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.20'
+    id 'kotlinx-serialization' version '1.3.20'
     id 'application'
 }
 
@@ -35,7 +36,9 @@ else {
 
 repositories {
     mavenCentral()
+    jcenter()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://kotlin.bintray.com/kotlinx" }
     flatDir {
         dirs '../rain/build/libs'
     }
@@ -61,6 +64,8 @@ dependencies {
     compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
     compile name: 'rain-1.0'
 
+    compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.10.0"
+
     if (os.contains("macosx")) {
         runtimeOnly "org.lwjgl:lwjgl-vulkan:$lwjglVersion:$lwjglNatives"
     }
@@ -68,8 +73,6 @@ dependencies {
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.noReflect = true
-    kotlinOptions.noStdlib = true
     kotlinOptions.freeCompilerArgs = ['-Xno-param-assertions']
 }
 
@@ -79,4 +82,5 @@ compileTestKotlin {
 
 sourceSets {
     main.kotlin.srcDirs += "src"
+    main.kotlin.srcDirs += "../rain/src"
 }

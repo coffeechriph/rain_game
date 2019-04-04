@@ -6,6 +6,7 @@ import rain.api.components.Transform
 import rain.api.entity.Entity
 import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
+import roguelike.Level.TILE_WIDTH
 
 enum class ItemType {
     NONE,
@@ -92,9 +93,9 @@ class Item (val player: Player,
                 }
             }
             else {
-                val dx = (player.transform.x - transform.x) / 64.0
-                val dy = (player.transform.y - transform.y) / 64.0
-                val ln = Math.sqrt((dx*dx+dy*dy))
+                val dx = (player.transform.x - transform.x) / TILE_WIDTH
+                val dy = (player.transform.y - transform.y) / TILE_WIDTH
+                val ln = Math.sqrt(((dx*dx+dy*dy).toDouble()))
                 transform.x += ((dx / ln) * acc).toFloat()
                 transform.y += ((dy / ln) * acc).toFloat()
                 if (acc < 3.7f) {

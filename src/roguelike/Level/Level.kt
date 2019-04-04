@@ -14,6 +14,7 @@ import java.lang.Math
 import java.util.stream.Collector
 import java.util.stream.Collectors
 
+const val TILE_WIDTH = 32.0f
 class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     lateinit var map: IntArray
         private set
@@ -66,8 +67,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var levelBuilder: LevelBuilder
 
     fun lightIntensityAt(x: Float, y: Float): Float {
-        var tx = (x / 64.0f).toInt()
-        var ty = (y / 64.0f).toInt()
+        var tx = (x / TILE_WIDTH).toInt()
+        var ty = (y / TILE_WIDTH).toInt()
         if (tx >= width) {
             tx = width -1
         }
@@ -102,11 +103,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         maxCellY = mapHeight / height
         texture = resourceFactory.buildTexture2d()
             .withName("tilemapTexture")
-            .fromImageFile("./data/textures/tiles.png")
+            .fromImageFile("./data/textures/tilemap_8x8.png")
             .withFilter(TextureFilter.NEAREST)
             .build()
 
-        texture.setTiledTexture(16,16)
+        texture.setTiledTexture(8,8)
         tilemapMaterial = resourceFactory.buildMaterial()
             .withName("tilemapMaterial")
             .withVertexShader("./data/shaders/tilemap.vert.spv")
@@ -237,28 +238,28 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 navMesh.map[enemy.lastX + enemy.lastY * width] = 0
             }
 
-            var x = enemy.transform.x.toInt()/64
-            var y = enemy.transform.y.toInt()/64
+            var x = enemy.transform.x.toInt()/TILE_WIDTH
+            var y = enemy.transform.y.toInt()/TILE_WIDTH
 
-            val elc = lightValues[x + y * width].w
+            val elc = lightValues[(x + y * width).toInt()].w
             enemy.getRenderComponents()[0].addCustomUniformData(0, elc)
 
             if (x >= width) {
-                x = width-1
+                x = (width-1).toFloat()
             }
             if (y >= height) {
-                y = height - 1
+                y = (height - 1).toFloat()
             }
             if (x < 0) {
-                x = 0
+                x = 0.0f
             }
             if (y < 0) {
-                y = 0
+                y = 0.0f
             }
 
-            navMesh.map[x + y * width] = 127.toByte()
-            enemy.lastX = x
-            enemy.lastY = y
+            navMesh.map[(x + y * width).toInt()] = 127.toByte()
+            enemy.lastX = x.toInt()
+            enemy.lastY = y.toInt()
         }
 
         player.damageEnemies(activeEnemies)
@@ -296,8 +297,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 targetTransform.z = 19.0f
                 targetTransform.x = enemy.transform.x
                 targetTransform.y = enemy.transform.y
-                targetTransform.sx = 64.0f
-                targetTransform.sy = 64.0f
+                targetTransform.sx = TILE_WIDTH
+                targetTransform.sy = TILE_WIDTH
             }
         }
         else {
@@ -320,15 +321,15 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                         if (px < 0) {
                             px = 0
                         }
-                        if (px > (width-1)*64.0f) {
-                            px = ((width - 1) * 64.0f).toInt()
+                        if (px > (width-1)*TILE_WIDTH) {
+                            px = ((width - 1) * TILE_WIDTH).toInt()
                         }
 
                         if (py < 0) {
                             py = 0
                         }
-                        if (py > (height-1)*64.0f) {
-                            py = ((height - 1) * 64.0f).toInt()
+                        if (py > (height-1)*TILE_WIDTH) {
+                            py = ((height - 1) * TILE_WIDTH).toInt()
                         }
 
                         xpBall.setPosition(xpBallSystem, Vector2i(px, py))
@@ -344,10 +345,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 continue
             }
 
-            val etx = (enemy.transform.x / 64.0f).toInt()
-            val ety = (enemy.transform.y / 64.0f).toInt()
-            val ptx = (player.transform.x / 64.0f).toInt()
-            val pty = (player.transform.y / 64.0f).toInt()
+            val etx = (enemy.transform.x / TILE_WIDTH).toInt()
+            val ety = (enemy.transform.y / TILE_WIDTH).toInt()
+            val ptx = (player.transform.x / TILE_WIDTH).toInt()
+            val pty = (player.transform.y / TILE_WIDTH).toInt()
 
             if (etx == ptx && Math.abs(pty-ety) <= 2 ||
                 ety == pty && Math.abs(ptx-etx) <= 2) {
@@ -366,10 +367,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 val ky = player.transform.y - enemy.transform.y
                 val dd = Math.sqrt((kx*kx+ky*ky).toDouble())
                 if (dd > 32.0f) {
-                    val worldX = enemy.transform.x / 64
-                    val worldY = enemy.transform.y / 64
-                    val px = (player.transform.x / 64).toInt()
-                    val py = (player.transform.y / 64).toInt()
+                    val worldX = enemy.transform.x / TILE_WIDTH
+                    val worldY = enemy.transform.y / TILE_WIDTH
+                    val px = (player.transform.x / TILE_WIDTH).toInt()
+                    val py = (player.transform.y / TILE_WIDTH).toInt()
 
                     if (px < width && py < height && px >= 0 && py >= 0) {
                         val path = navMesh.findPath(Vector2i(worldX.toInt(), worldY.toInt()), Vector2i(px, py))
@@ -391,8 +392,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             else if (enemy.path.size > 0 && enemy.pathIndex < enemy.path.size) {
                 // Move to first tile
                 val target = Vector2i(enemy.path[enemy.pathIndex])
-                target.x *= 64
-                target.y *= 64
+                target.x *= TILE_WIDTH.toInt()
+                target.y *= TILE_WIDTH.toInt()
                 val dx2 = (target.x + 32) - enemy.transform.x
                 val dy2 = (target.y + 32) - enemy.transform.y
                 val ln = Math.sqrt((dx2*dx2+dy2*dy2).toDouble());
@@ -448,8 +449,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         for (container in activeContainers) {
-            val tx = (container.transform.x / 64.0f).toInt()
-            val ty = (container.transform.y / 64.0f).toInt()
+            val tx = (container.transform.x / TILE_WIDTH).toInt()
+            val ty = (container.transform.y / TILE_WIDTH).toInt()
             val clc = lightValues[tx + ty * width].w
             container.getRenderComponents()[0].addCustomUniformData(0, clc)
 
@@ -498,8 +499,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                             .build()
                     val angle = random.nextFloat()*Math.PI
                     val direction = Vector2f(Math.sin(angle).toFloat(), Math.cos(angle).toFloat())
-                    direction.x *= 64.0f
-                    direction.y *= 64.0f
+                    direction.x *= TILE_WIDTH
+                    direction.y *= TILE_WIDTH
                     item.setPosition(Vector2i(container.transform.x.toInt()+direction.x.toInt(), container.transform.y.toInt()+direction.y.toInt()))
                     item.transform.sx = 40.0f
                     item.transform.sy = 40.0f
@@ -559,8 +560,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         // Put out light values
         for (light in activeLightSources) {
             val t = light.transform
-            var x = ((t.x-32.0f) / 64.0f).toInt()
-            var y = ((t.y-32.0f) / 64.0f).toInt()
+            var x = ((t.x-32.0f) / TILE_WIDTH).toInt()
+            var y = ((t.y-32.0f) / TILE_WIDTH).toInt()
 
             if (x < 0) { x = 0 }
             else if (x >= width) { x = width - 1 }
@@ -574,14 +575,14 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         for (xp in xpBallSystem.getEntityList()) {
             if (xp!!.getRenderComponents()[0].visible) {
                 val t = xp.transform
-                val x = (t.x / 64.0f).toInt()
-                val y = (t.y / 64.0f).toInt()
+                val x = (t.x / TILE_WIDTH).toInt()
+                val y = (t.y / TILE_WIDTH).toInt()
                 spreadLight(x, y, Vector4f(0.0f, 1.0f, 0.0f, 1.0f))
             }
         }
 
-        val px = ((player.transform.x) / 64.0f).toInt()
-        val py = ((player.transform.y) / 64.0f).toInt()
+        val px = ((player.transform.x) / TILE_WIDTH).toInt()
+        val py = ((player.transform.y) / TILE_WIDTH).toInt()
         spreadLight(px, py, Vector4f(0.48f, 0.62f, 0.69f, 1.0f))
 
         var x = 0.0f
@@ -593,10 +594,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             // mapLayers[0].setTile(ix, iy, lightValues[i].x, lightValues[i].y, lightValues[i].z, lightValues[i].w)
 
             index += 36
-            x += 64.0f
-            if (x >= width*64.0f) {
+            x += TILE_WIDTH
+            if (x >= width*TILE_WIDTH) {
                 x = 0.0f
-                y += 64.0f
+                y += TILE_WIDTH
             }
 
             ix += 1
