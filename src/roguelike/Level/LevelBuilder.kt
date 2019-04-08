@@ -187,7 +187,7 @@ class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
             for (layer in map.layers) {
                 var hasCollision = false
                 for (metadata in layer.metadata) {
-                    if (metadata.name == "collision") {
+                    if (metadata.name == "hasCollision") {
                         hasCollision = true
                     }
                 }
@@ -197,8 +197,8 @@ class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
                         for (index in group.tileIndicesIntoMap) {
                             val x = index % cellWidth
                             val y = index / cellWidth
-                            val w = map.tileWidth
-                            val h = map.tileHeight
+                            val w = TILE_WIDTH
+                            val h = TILE_WIDTH
                             collisionBoxes.add(Vector4i((x*w).toInt(), (y*h).toInt(), (w).toInt(), (h).toInt()))
                         }
                     }

@@ -175,7 +175,7 @@ class Player : Entity() {
     override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
         renderComponent = getRenderComponents()[0]
         animator = getAnimatorComponent()[0]
-        transform.setScale(32.0f,32.0f)
+        transform.setScale(TILE_WIDTH, TILE_WIDTH)
 
         animator.addAnimation("idle_down", 0, 0, 0, 0.0f)
         animator.addAnimation("walk_down", 0, 4, 0, GLOBAL_ANIMATION_SPEED)
@@ -283,8 +283,14 @@ class Player : Entity() {
                 }
             }
 
-            scene.activeCamera.x = 0.0f
-            scene.activeCamera.y = shake * 2
+            if (facingDirection == Direction.UP || facingDirection == Direction.DOWN) {
+                scene.activeCamera.y = 0.0f
+                scene.activeCamera.x = shake * 2
+            }
+            else {
+                scene.activeCamera.x = 0.0f
+                scene.activeCamera.y = shake * 2
+            }
 
             val cl = Math.max(Math.min(1.0f,shake),0.0f)
             renderComponent.color.set(cl,cl,cl,cl)
@@ -312,11 +318,15 @@ class Player : Entity() {
     }
 
     private fun movement() {
+        if (attackTimeout > 0.0f) {
+            return
+        }
+
         if (targetedEnemy == null) {
             facingDirection = lastDirection
         }
 
-        if (attackTimeout <= 0.0f && inputTimestamps.size <= 0) {
+        if (inputTimestamps.size <= 0) {
             when (facingDirection) {
                 Direction.LEFT  -> animator.setAnimation("idle_left")
                 Direction.RIGHT -> animator.setAnimation("idle_right")
@@ -480,7 +490,6 @@ class Player : Entity() {
         }
 
         if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
-            inputTimestamps.clear()
             getMoveComponent()!!.update(0.0f, 0.0f)
 
             if (attackTimeout <= 0.0f) {

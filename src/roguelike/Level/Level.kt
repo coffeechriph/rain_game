@@ -14,7 +14,7 @@ import java.lang.Math
 import java.util.stream.Collector
 import java.util.stream.Collectors
 
-const val TILE_WIDTH = 32.0f
+const val TILE_WIDTH = 48.0f
 class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     lateinit var map: IntArray
         private set

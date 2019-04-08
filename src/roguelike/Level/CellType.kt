@@ -42,17 +42,17 @@ class CellType(
 
         for (mapDefinition in sceneDefinition.map) {
             if (mapDefinition.tileNumX != numTileX || mapDefinition.tileNumY != numTileY) {
-               // assertion("The size of the map must be ${numTileX}x$numTileY but is ${mapDefinition.tileNumX}x${mapDefinition.tileNumY}")
+                assertion("The size of the map must be ${numTileX}x$numTileY but is ${mapDefinition.tileNumX}x${mapDefinition.tileNumY}")
             }
 
             for (layer in mapDefinition.layers) {
                 for (metadata in layer.metadata) {
                     when {
                         metadata.name == "levelExit" -> hasExit = true
-                        metadata.name == "hasConnectionLeft" -> hasConnectionLeft = true
-                        metadata.name == "hasConnectionRight" -> hasConnectionRight = true
-                        metadata.name == "hasConnectionTop" -> hasConnectionTop = true
-                        metadata.name == "hasConnectionBot" -> hasConnectionBot = true
+                        metadata.name.toLowerCase().contains("left") -> hasConnectionLeft = true
+                        metadata.name.toLowerCase().contains("right") -> hasConnectionRight = true
+                        metadata.name.toLowerCase().contains("top") -> hasConnectionTop = true
+                        metadata.name.toLowerCase().contains("bot") -> hasConnectionBot = true
                     }
                 }
             }
