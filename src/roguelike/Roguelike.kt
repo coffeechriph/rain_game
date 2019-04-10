@@ -3,19 +3,17 @@ package roguelike
 import rain.Rain
 
 class Roguelike: Rain() {
-    lateinit var gameState: GameState
-    lateinit var menuState: MenuState
+    private lateinit var menuScene: MenuState
+    private lateinit var gameScene: GameState
 
-    // TODO: We can still load resources here which will be cleared once we switch state!!
-    // This is "bad practice" but we should try to prevent that
     override fun init() {
         showMouse = true
-        gameState = GameState(stateManager)
-        stateManager.states.put("game", gameState)
 
-        menuState = MenuState(stateManager)
-        stateManager.states.put("menu", menuState)
+        menuScene = MenuState(sceneManager, resourceFactory)
+        gameScene = GameState(sceneManager, resourceFactory)
 
-        stateManager.startState("menu")
+        menuScene.gameScene = gameScene
+        gameScene.menuScene = menuScene
+        sceneManager.loadScene(menuScene)
     }
 }

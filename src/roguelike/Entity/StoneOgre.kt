@@ -2,8 +2,6 @@ package roguelike.Entity
 
 import org.joml.Random
 import rain.api.Input
-import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 
 class StoneOgre(random: Random, player: Player): Enemy(random, player) {
@@ -15,8 +13,8 @@ class StoneOgre(random: Random, player: Player): Enemy(random, player) {
         attackSpeed = 0.007f
     }
 
-    override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
-        super.init(scene, system)
+    override fun init(scene: Scene) {
+        super.init(scene)
 
         // TODO: Should be able to animate on the Y axis as well
         animator.addAnimation("idle_up", 0, 0, 1, 1.0f)
@@ -30,8 +28,8 @@ class StoneOgre(random: Random, player: Player): Enemy(random, player) {
         attackTimeoutValue = 100
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
-        super.update(scene, input, system)
+    override fun update(scene: Scene, input: Input) {
+        super.update(scene, input)
         val transform = transform
         transform.z = 1.0f + transform.y * 0.001f
 

@@ -4,9 +4,7 @@ import org.joml.Vector2i
 import rain.api.Input
 import rain.api.components.Animator
 import rain.api.components.RenderComponent
-import rain.api.components.Transform
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.gfx.Material
 import rain.api.gfx.Mesh
 import rain.api.scene.Scene
@@ -26,10 +24,6 @@ class Player : Entity() {
     lateinit var legsArmor: Entity
     lateinit var bootsArmor: Entity
     lateinit var handsArmor: Entity
-    lateinit var chestArmorSystem: EntitySystem<Entity>
-    lateinit var legsArmorSystem: EntitySystem<Entity>
-    lateinit var handsArmorSystem: EntitySystem<Entity>
-    lateinit var bootsArmorSystem: EntitySystem<Entity>
 
     var health = 107
     var stamina = 5
@@ -168,11 +162,10 @@ class Player : Entity() {
     fun setPosition(pos: Vector2i) {
         transform.x = pos.x.toFloat()%1280
         transform.y = pos.y.toFloat()%768
-        getMoveComponent()!!.update(0.0f, 0.0f)
         playerMovedCell = true
     }
 
-    override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
+    override fun init(scene: Scene) {
         renderComponent = getRenderComponents()[0]
         animator = getAnimatorComponent()[0]
         transform.setScale(TILE_WIDTH, TILE_WIDTH)
@@ -206,35 +199,35 @@ class Player : Entity() {
         attack.attacker = this
 
         chestArmor = Entity()
-        chestArmorSystem.newEntity(chestArmor)
+        scene.newEntity(chestArmor)
             .attachRenderComponent(chestArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
         chestArmor.getRenderComponents()[0].visible = false
 
         legsArmor = Entity()
-        legsArmorSystem.newEntity(legsArmor)
+        scene.newEntity(legsArmor)
             .attachRenderComponent(legsArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
         legsArmor.getRenderComponents()[0].visible = false
 
         handsArmor = Entity()
-        handsArmorSystem.newEntity(handsArmor)
+        scene.newEntity(handsArmor)
             .attachRenderComponent(handsArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
         handsArmor.getRenderComponents()[0].visible = false
 
         bootsArmor = Entity()
-        bootsArmorSystem.newEntity(bootsArmor)
+        scene.newEntity(bootsArmor)
             .attachRenderComponent(bootsArmorMaterial, equipmentMesh)
             .attachAnimatorComponent(animator)
             .build()
         bootsArmor.getRenderComponents()[0].visible = false
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
+    override fun update(scene: Scene, input: Input) {
         val chestTransform = chestArmor.transform
         val legsTransform = legsArmor.transform
         val handsTransform = handsArmor.transform
@@ -272,13 +265,13 @@ class Player : Entity() {
 
             if (damagePushVelX < 0.0f || damagePushVelX > 0.0f) {
                 if (!level.collides(transform.x + damagePushVelX, transform.y, TILE_WIDTH, TILE_WIDTH)) {
-                    getMoveComponent()!!.update(damagePushVelX, 0.0f)
+                    transform.x += damagePushVelX
                     isStill = false
                 }
             }
             else if (damagePushVelY < 0.0f || damagePushVelY > 0.0f) {
                 if (!level.collides(transform.x, transform.y + damagePushVelY, TILE_WIDTH, TILE_WIDTH)) {
-                    getMoveComponent()!!.update(0.0f, damagePushVelY)
+                    transform.y += damagePushVelY
                     isStill = false
                 }
             }
@@ -355,7 +348,6 @@ class Player : Entity() {
             if (inputTimestamps.size <= 0) {
                 if (damageShake <= 0.0f) {
                     if (!isStill) {
-                        getMoveComponent()!!.update(0.0f, 0.0f)
                         isStill = true
                     }
                 }
@@ -398,7 +390,8 @@ class Player : Entity() {
                 velY = 0.0f
             }
 
-            getMoveComponent()!!.update(velX, velY)
+            transform.x += velX
+            transform.y += velY
             isStill = false
             keepPlayerWithinBorder(velX, velY)
         }
@@ -423,7 +416,8 @@ class Player : Entity() {
                     velY = 0.0f
                 }
 
-                getMoveComponent()!!.update(velX, velY)
+                transform.x += velX
+                transform.y += velY
                 isStill = false
                 keepPlayerWithinBorder(velX, velY)
             }
@@ -476,22 +470,16 @@ class Player : Entity() {
         if (attackTimeout > 0.0f) {
             val moveFactor = 5.0f
             when(facingDirection) {
-                Direction.LEFT -> getMoveComponent()!!.update(-moveFactor, 0.0f)
-                Direction.RIGHT -> getMoveComponent()!!.update(moveFactor, 0.0f)
-                Direction.UP -> getMoveComponent()!!.update(0.0f, -moveFactor)
-                Direction.DOWN -> getMoveComponent()!!.update(0.0f, moveFactor)
+                Direction.LEFT -> transform.x -= moveFactor
+                Direction.RIGHT -> transform.x += moveFactor
+                Direction.UP -> transform.y -= moveFactor
+                Direction.DOWN -> transform.y += moveFactor
             }
 
             attackTimeout -= 1.0f / 60.0f / 8.0f
-
-            if (attackTimeout <= 1.0f / 60.0f / 2.0f) {
-                getMoveComponent()!!.update(0.0f, 0.0f)
-            }
         }
 
         if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
-            getMoveComponent()!!.update(0.0f, 0.0f)
-
             if (attackTimeout <= 0.0f) {
                 attackInRowCount += 1
                 attackTimeout = 1.0f / 60.0f
@@ -549,26 +537,30 @@ class Player : Entity() {
         val transform = transform
         if (transform.x < 0 && velX < 0.0f) {
             transform.x = 1270.0f
-            getMoveComponent()!!.update(velX, velY)
+            transform.x += velX
+            transform.y += velY
 
             playerMovedCell = true
         }
         else if (transform.x > 1280 && velX > 0.0f) {
             transform.x = 10.0f
-            getMoveComponent()!!.update(velX, velY)
+            transform.x += velX
+            transform.y += velY
 
             playerMovedCell = true
         }
 
         if (transform.y < 0 && velY < 0.0f) {
             transform.y = 758.0f
-            getMoveComponent()!!.update(velX, velY)
+            transform.x += velX
+            transform.y += velY
 
             playerMovedCell = true
         }
         else if (transform.y > 768 && velY > 0.0f) {
             transform.y = 10.0f
-            getMoveComponent()!!.update(velX, velY)
+            transform.x += velX
+            transform.y += velY
 
             playerMovedCell = true
         }

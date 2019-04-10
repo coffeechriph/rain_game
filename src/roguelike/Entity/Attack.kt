@@ -3,7 +3,6 @@ package roguelike.Entity
 import rain.api.Input
 import rain.api.components.Transform
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 
 /*
@@ -30,7 +29,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
         return active
     }
 
-    override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
+    override fun init(scene: Scene) {
         transform.setPosition(1200.0f,600.0f, 9.0f)
         transform.setScale(1.0f, 1.0f)
         //transform.setScale(72.0f,72.0f)
@@ -38,7 +37,7 @@ class Attack(private val parentTransform: Transform) : Entity() {
         getRenderComponents()[0].addCustomUniformData(0, 1.0f)
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
+    override fun update(scene: Scene, input: Input) {
         val animator = getAnimatorComponent()[0]
 
         if (active) {

@@ -9,7 +9,6 @@ import rain.api.components.Animator
 import rain.api.components.RenderComponent
 import rain.api.components.Transform
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 import kotlin.math.sin
 
@@ -152,11 +151,11 @@ open class Enemy(private val random: Random, val player: Player) : Entity() {
         }
     }
 
-    override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
+    override fun init(scene: Scene) {
         animator = getAnimatorComponent()!![0]
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
+    override fun update(scene: Scene, input: Input) {
         if (health <= 0) {
             attacking = false
         }

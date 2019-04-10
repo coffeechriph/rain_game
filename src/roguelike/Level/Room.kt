@@ -2,9 +2,6 @@ package roguelike.Level
 
 import org.joml.*
 import rain.api.components.Animator
-import rain.api.entity.DirectionType
-import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.gfx.Material
 import rain.api.gfx.Mesh
 import rain.api.scene.Scene
@@ -86,13 +83,11 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
 
     internal fun generateEnemiesInRoom(
         random: Random,
-        enemySystem: EntitySystem<Enemy>,
+        scene: Scene,
         enemyMaterial: Material,
         quadMesh: Mesh,
-        enemyAttackSystem: EntitySystem<Entity>,
         player: Player,
         count: Int,
-        healthBarSystem: EntitySystem<HealthBar>,
         healthMaterial: Material,
         enemyAttackMaterial: Material,
         enemyTypes: Array<EnemyType>
@@ -112,12 +107,12 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             }
 
             val enemyAnimator = Animator()
-            enemySystem.newEntity(enemyEntity)
+            scene.newEntity(enemyEntity)
                     .attachRenderComponent(enemyMaterial, quadMesh)
                     .attachAnimatorComponent(enemyAnimator)
                     .build()
 
-            enemyAttackSystem.newEntity(enemyEntity.attackAreaVisual)
+            scene.newEntity(enemyEntity.attackAreaVisual)
                     .attachRenderComponent(enemyAttackMaterial, quadMesh)
                     .build()
 
@@ -137,7 +132,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             val et = enemyEntity.transform
             enemyEntity.healthBar.parentTransform = et
 
-            healthBarSystem.newEntity(enemyEntity.healthBar)
+            scene.newEntity(enemyEntity.healthBar)
                     .attachRenderComponent(healthMaterial, quadMesh)
                     .build()
 
@@ -150,7 +145,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
         }
     }
 
-    internal fun generateContainersInRoom(random: Random, count: Int, containerSystem: EntitySystem<Container>, containerMaterial: Material, quadMesh: Mesh) {
+    internal fun generateContainersInRoom(random: Random, scene: Scene, count: Int, containerMaterial: Material, quadMesh: Mesh) {
         for (i in 0 until count) {
             val tile = findNoneEdgeTile(random)
             if (tile == null) {
@@ -158,7 +153,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             }
 
             val container = Container(random.nextInt(2), random.nextInt(7) + 1)
-            containerSystem.newEntity(container)
+            scene.newEntity(container)
                     .attachRenderComponent(containerMaterial, quadMesh)
                     .build()
 
@@ -168,7 +163,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
         }
     }
 
-    internal fun generateLightsInRoom(scene: Scene, random: Random, map: IntArray, mapWidth: Int, width: Int, height: Int, torches: Int, campfire: Boolean, torchSystem: EntitySystem<LightSource>, torchMaterial: Material, quadMesh: Mesh) {
+    internal fun generateLightsInRoom(scene: Scene, random: Random, map: IntArray, mapWidth: Int, width: Int, height: Int, torches: Int, campfire: Boolean, torchMaterial: Material, quadMesh: Mesh) {
         var numTorches = 0
         for (tile in tiles) {
             val x = tile.x
@@ -187,7 +182,7 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
                 emitter.velocity.y = -30.0f
 
                 val et = LightSource(x / width, y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
-                torchSystem.newEntity(et)
+                scene.newEntity(et)
                         .attachRenderComponent(torchMaterial, quadMesh)
                         .build()
                 et.transform.setPosition((tx*TILE_WIDTH + 32).toFloat(), (ty*TILE_WIDTH - 32).toFloat(), 18.0f)
@@ -202,29 +197,6 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
 
             if (numTorches >= torches) {
                 break
-            }
-        }
-
-        if (campfire) {
-            val tile = findNoneEdgeTile(random)
-            if (tile != null) {
-                val tx = tile.x % width
-                val ty = tile.y % height
-
-                val emitter = scene.createParticleEmitter(0.7f, 20, 20.0f)
-                // emitter.startSize = 20.0f
-                emitter.startColor.set(1.0f, 0.9f, 0.2f, 1.0f)
-                emitter.endColor.set(0.8f, 0.2f, 0.0f, 0.0f)
-                emitter.enabled = false
-
-                val et = LightSource(tile.x / width, tile.y / height, Vector3f(0.9f, 0.55f, 0.1f), emitter)
-                torchSystem.newEntity(et)
-                        .build()
-                et.transform.setPosition(((tx*TILE_WIDTH) + 32).toFloat(), ((ty*TILE_WIDTH) - 32).toFloat(), 18.0f)
-                et.transform.sx = TILE_WIDTH
-                et.transform.sy = TILE_WIDTH
-                emitter.transform.parentTransform = et.transform
-                this.campfire.add(et)
             }
         }
     }

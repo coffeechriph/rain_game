@@ -2,9 +2,7 @@ package roguelike.Entity
 
 import org.joml.Vector2i
 import rain.api.Input
-import rain.api.components.Transform
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 import roguelike.Level.TILE_WIDTH
 
@@ -25,10 +23,10 @@ class Container(private val containerType: Int, val numItems: Int) : Entity() {
         transform.y = (pos.y%768).toFloat()
     }
 
-    override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
+    override fun init(scene: Scene) {
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
+    override fun update(scene: Scene, input: Input) {
         if (open) {
             getRenderComponents()[0].textureTileOffset = Vector2i(1,containerType+12)
         }

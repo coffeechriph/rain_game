@@ -2,11 +2,8 @@ package roguelike
 
 import org.joml.Vector2i
 import org.joml.Vector4f
-import rain.State
-import rain.StateManager
 import rain.api.Input
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.gfx.Mesh
 import rain.api.gfx.ResourceFactory
 import rain.api.gfx.Texture2d
@@ -14,23 +11,23 @@ import rain.api.gfx.TextureFilter
 import rain.api.gui.v2.*
 import rain.api.scene.Camera
 import rain.api.scene.Scene
-import roguelike.Level.TILE_WIDTH
+import rain.api.scene.SceneManager
 
-class MenuState(stateManager: StateManager): State(stateManager) {
+class MenuState(sceneManager: SceneManager, resourceFactory: ResourceFactory): Scene(sceneManager, resourceFactory) {
+    lateinit var gameScene: GameState
     private var camera = Camera(1000.0f, Vector2i(1280, 768))
     private lateinit var menuContainer: Panel
     private lateinit var startGameButton: Button
     private lateinit var settingsButton: Button
     private lateinit var exitButton: Button
     private lateinit var bannerEntity: Entity
-    private lateinit var bannerEntitySystem: EntitySystem<Entity>
     private lateinit var bannerTexture: Texture2d
     private var selectedButton = 0
 
     private var buttonsAnimation = 0.0f
 
-    override fun init(resourceFactory: ResourceFactory, scene: Scene) {
-        scene.activeCamera = camera
+    override fun init() {
+        activeCamera = camera
 
         val rowLayout = FillRowLayout()
         rowLayout.componentHeight = 40.0f
@@ -47,11 +44,6 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         menuContainer.y = 300.0f
         menuContainer.moveable = false
         menuContainer.resizable = false
-
-//        menuContainer.skin.backgroundColors["button"] = Vector3f(143.0f / 255.0f, 114.0f / 255.0f, 73.0f / 255.0f)
-//        menuContainer.skin.borderColors["button"] = Vector3f(143.0f / 255.0f * 0.5f, 114.0f / 255.0f * 0.5f, 73.0f / 255.0f * 0.5f)
-//        menuContainer.skin.activeColors["button"] = Vector3f(143.0f / 255.0f * 1.25f, 114.0f / 255.0f * 1.25f, 73.0f / 255.0f * 1.25f)
-//        menuContainer.skin.foregroundColors["text"] = Vector3f(240.0f / 255.0f, 207.0f / 255.0f, 117.0f / 255.0f)
 
         startGameButton = menuContainer.createButton("New Game")
         settingsButton = menuContainer.createButton("Settings")
@@ -72,13 +64,12 @@ class MenuState(stateManager: StateManager): State(stateManager) {
                 .withBatching(false)
                 .build()
 
-        bannerEntity = Entity()
 
         val quadVertexBuffer = resourceFactory.buildVertexBuffer().as2dQuad()
         val bannerMesh = Mesh(quadVertexBuffer, null)
 
-        bannerEntitySystem = scene.newSystem(bannerMaterial)
-        bannerEntitySystem.newEntity(bannerEntity)
+        bannerEntity = Entity()
+        newEntity(bannerEntity)
                 .attachRenderComponent(bannerMaterial, bannerMesh)
                 .build()
         bannerEntity.getRenderComponents()[0].addCustomUniformData(0, 1.0f)
@@ -91,7 +82,7 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         bannerTransform.z = 1.0f
     }
 
-    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
+    override fun update(input: Input) {
         when (selectedButton) {
             0 -> {
                 startGameButton.active = true
@@ -118,13 +109,14 @@ class MenuState(stateManager: StateManager): State(stateManager) {
         if (input.keyState(Input.Key.KEY_SPACE) == Input.InputState.PRESSED) {
             when (selectedButton) {
                 0 -> {
-                    stateManager.startState("game")
+                    sceneManager.unloadScene(this)
+                    sceneManager.loadScene(gameScene)
                 }
                 1 -> {
 
                 }
                 2 -> {
-                    stateManager.exitState()
+                    // TODO: Exit game
                 }
             }
         }

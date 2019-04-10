@@ -3,16 +3,10 @@ package roguelike.Level
 import org.joml.*
 import rain.api.Input
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.gfx.*
 import rain.api.scene.*
-import rain.api.scene.parse.JsonSceneLoader
-import rain.assertion
 import roguelike.Entity.*
-import java.io.File
 import java.lang.Math
-import java.util.stream.Collector
-import java.util.stream.Collectors
 
 const val TILE_WIDTH = 48.0f
 class Level(private val player: Player, val resourceFactory: ResourceFactory) {
@@ -37,21 +31,13 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var texture: Texture2d
     private lateinit var torchTexture: Texture2d
     private lateinit var torchMaterial: Material
-    private lateinit var torchSystem: EntitySystem<LightSource>
     private var firstBuild = true
 
     private var random = Random(System.currentTimeMillis())
-    private lateinit var enemySystem: EntitySystem<Enemy>
-    private lateinit var enemyAttackSystem: EntitySystem<Entity>
     private lateinit var enemyTexture: Texture2d
     private lateinit var enemyMaterial: Material
     private lateinit var enemyAttackMaterial: Material
-    private lateinit var collisionSystem: EntitySystem<Entity>
-    private lateinit var containerSystem: EntitySystem<Container>
-    private lateinit var levelItemSystem: EntitySystem<Item>
     private lateinit var enemyTargetEntity: Entity
-    private lateinit var enemyTargetSystem: EntitySystem<Entity>
-    private lateinit var xpBallSystem: EntitySystem<XpBall>
     private lateinit var navMesh: NavMesh
 
     private var delayLightUpdate = 0
@@ -143,8 +129,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             .withBatching(false)
             .build()
 
-        enemySystem = scene.newSystem(enemyMaterial)
-
         enemyAttackMaterial = resourceFactory.buildMaterial()
             .withName("enemyAttackMaterial")
             .withVertexShader("./data/shaders/basic.vert.spv")
@@ -154,13 +138,6 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             .withBlendEnabled(false)
             .withBatching(false)
             .build()
-
-        enemyAttackSystem = scene.newSystem(enemyAttackMaterial)
-
-        collisionSystem = scene.newSystem(itemMaterial)
-        containerSystem = scene.newSystem(itemMaterial)
-        levelItemSystem = scene.newSystem(itemMaterial)
-        xpBallSystem = scene.newSystem(itemMaterial)
 
         torchTexture = resourceFactory.buildTexture2d()
             .withName("torch")
@@ -175,13 +152,10 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             .withTexture(torchTexture)
             .withBatching(false)
             .build()
-        torchSystem = scene.newSystem(torchMaterial)
-
         lightValues = Array(width*height){Vector4f()}
 
-        enemyTargetSystem = scene.newSystem(itemMaterial)
         enemyTargetEntity = Entity()
-        enemyTargetSystem.newEntity(enemyTargetEntity)
+        scene.newEntity(enemyTargetEntity)
             .attachRenderComponent(itemMaterial, quadMesh)
             .build()
 
@@ -197,7 +171,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
     }
 
-    fun update(input: Input) {
+    fun update(scene: Scene, input: Input) {
         currentCell!!.visible = true
 
         val lc = lightIntensityAt(player.transform.x, player.transform.y)
@@ -224,7 +198,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
 
         for (e in enemiesToRemove) {
-            enemySystem.removeEntity(e)
+            scene.removeEntity(e)
             activeEnemies.remove(e)
         }
 
@@ -311,7 +285,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     for (i in 0 until random.nextInt(5)+1) {
                         // Add xp balls to the world
                         val xpBall = XpBall(player)
-                        xpBallSystem.newEntity(xpBall)
+                        scene.newEntity(xpBall)
                                 .attachRenderComponent(itemMaterial, quadMesh)
                                 .build()
 
@@ -332,7 +306,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                             py = ((height - 1) * TILE_WIDTH).toInt()
                         }
 
-                        xpBall.setPosition(xpBallSystem, Vector2i(px, py))
+                        xpBall.setPosition(Vector2i(px, py))
                         xpBall.transform.sx = random.nextFloat() * 16.0f + 40.0f
                         xpBall.transform.sy = random.nextFloat() * 16.0f + 40.0f
                         xpBall.getRenderComponents()[0].textureTileOffset = Vector2i(5,14)
@@ -494,7 +468,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                         Item(player, combination.first.type, "$qualityName $name", 0, 0, 0, 0, health, true, 0.0f)
                     }
 
-                    levelItemSystem.newEntity(item)
+                    scene.newEntity(item)
                             .attachRenderComponent(itemMaterial, quadMesh)
                             .build()
                     val angle = random.nextFloat()*Math.PI
@@ -571,15 +545,15 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             spreadLight(x, y, lightValues[x + y * width])
         }
 
-        // Put out light values at XpBalls
-        for (xp in xpBallSystem.getEntityList()) {
+        // TODO: Put out light values at XpBalls
+        /*for (xp in xpBallSystem.getEntityList()) {
             if (xp!!.getRenderComponents()[0].visible) {
                 val t = xp.transform
                 val x = (t.x / TILE_WIDTH).toInt()
                 val y = (t.y / TILE_WIDTH).toInt()
                 spreadLight(x, y, Vector4f(0.0f, 1.0f, 0.0f, 1.0f))
             }
-        }
+        }*/
 
         val px = ((player.transform.x) / TILE_WIDTH).toInt()
         val py = ((player.transform.y) / TILE_WIDTH).toInt()

@@ -2,9 +2,7 @@ package roguelike.Entity
 
 import org.joml.Vector2i
 import rain.api.Input
-import rain.api.components.Transform
 import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.scene.Scene
 import roguelike.Level.TILE_WIDTH
 
@@ -18,7 +16,7 @@ class XpBall(private val player: Player): Entity() {
     private var acc = 0.0000000000001
 
     // TODO: Constant window size
-    fun setPosition(system: EntitySystem<XpBall>, pos: Vector2i) {
+    fun setPosition(pos: Vector2i) {
         val transform = transform
         transform.x = pos.x.toFloat()
         transform.y = pos.y.toFloat()
@@ -28,10 +26,10 @@ class XpBall(private val player: Player): Entity() {
         cellY = pos.y / 768
     }
 
-    override fun <T : Entity> init(scene: Scene, system: EntitySystem<T>) {
+    override fun init(scene: Scene) {
     }
 
-    override fun <T : Entity> update(scene: Scene, input: Input, system: EntitySystem<T>) {
+    override fun update(scene: Scene, input: Input) {
         if (getRenderComponents()[0].visible) {
             time += 1.0f / 60.0f
             val transform = transform

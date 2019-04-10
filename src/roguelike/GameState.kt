@@ -1,25 +1,20 @@
 package roguelike
 
-import org.joml.Vector2f
 import org.joml.Vector2i
-import rain.State
-import rain.StateManager
 import rain.api.Input
 import rain.api.components.Animator
-import rain.api.entity.Entity
-import rain.api.entity.EntitySystem
 import rain.api.gfx.*
 import rain.api.gui.v2.*
 import rain.api.scene.Camera
 import rain.api.scene.Scene
-import roguelike.Entity.Attack
-import roguelike.Entity.HealthBar
+import rain.api.scene.SceneManager
 import roguelike.Entity.Inventory
 import roguelike.Entity.Player
 import roguelike.Level.Level
 import roguelike.Level.TILE_WIDTH
 
-class GameState(stateManager: StateManager): State(stateManager) {
+class GameState(sceneManager: SceneManager, resourceFactory: ResourceFactory): Scene(sceneManager, resourceFactory) {
+    lateinit var menuScene: MenuState
     lateinit var quadMesh: Mesh
     private lateinit var attackMaterial: Material
     private lateinit var mobMaterial: Material
@@ -33,14 +28,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private lateinit var bootsArmorTexture: Texture2d
     private lateinit var bootsArmorMaterial: Material
     private lateinit var healthMaterial: Material
-    private lateinit var playerSystem: EntitySystem<Player>
-    private lateinit var chestArmorSystem: EntitySystem<Entity>
-    private lateinit var legsArmorSystem: EntitySystem<Entity>
-    private lateinit var bootsArmorSystem: EntitySystem<Entity>
-    private lateinit var handsArmorSystem: EntitySystem<Entity>
     private var playerAnimator = Animator()
-    private lateinit var attackSystem: EntitySystem<Attack>
-    private lateinit var healthBarSystem: EntitySystem<HealthBar>
     private lateinit var player: Player
     private lateinit var inventory: Inventory
     private lateinit var container: Panel
@@ -51,7 +39,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
     private var camera = Camera(1000.0f, Vector2i(1280, 768))
     private lateinit var level: Level
 
-    override fun init(resourceFactory: ResourceFactory, scene: Scene) {
+    override fun init() {
         val quadVertexBuffer = resourceFactory.buildVertexBuffer().as2dQuad()
         quadMesh = Mesh(quadVertexBuffer, null)
 
@@ -134,24 +122,13 @@ class GameState(stateManager: StateManager): State(stateManager) {
             .withDepthTest(false)
             .build()
 
-        chestArmorSystem = scene.newSystem(chestArmorMaterial)
-        legsArmorSystem = scene.newSystem(legsArmorMaterial)
-        bootsArmorSystem = scene.newSystem(bootsArmorMaterial)
-        handsArmorSystem = scene.newSystem(handsArmorMaterial)
-
         player = Player()
-        player.chestArmorSystem = chestArmorSystem
         player.chestArmorMaterial = chestArmorMaterial
-        player.legsArmorSystem = legsArmorSystem
         player.legsArmorMaterial = legsArmorMaterial
-        player.bootsArmorSystem = bootsArmorSystem
         player.bootsArmorMaterial = bootsArmorMaterial
-        player.handsArmorSystem = handsArmorSystem
         player.handsArmorMaterial = handsArmorMaterial
         player.equipmentMesh = quadMesh
-        playerSystem = scene.newSystem(mobMaterial)
-        playerSystem.newEntity(player)
-                .attachMoveComponent(0.0f, 0.0f)
+        newEntity(player)
                 .attachRenderComponent(mobMaterial, quadMesh)
                 .attachAnimatorComponent(playerAnimator)
                 .build()
@@ -174,8 +151,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .withBatching(false)
                 .build()
 
-        attackSystem = scene.newSystem(attackMaterial)
-        attackSystem.newEntity(player.attack)
+        newEntity(player.attack)
                 .attachRenderComponent(attackMaterial, quadMesh)
                 .attachAnimatorComponent(Animator())
                 .build()
@@ -197,18 +173,16 @@ class GameState(stateManager: StateManager): State(stateManager) {
                 .withTexture(healthTexture)
                 .withBatching(false)
                 .build()
-        healthBarSystem = scene.newSystem(healthMaterial)
 
         // TODO: Constant window dimensions
-        level.create(resourceFactory, scene, (8960 / TILE_WIDTH).toInt(),
+        level.create(resourceFactory, this, (8960 / TILE_WIDTH).toInt(),
             (5376 / TILE_WIDTH).toInt(), (1280 / TILE_WIDTH).toInt(), (768 / TILE_WIDTH).toInt()
         )
 
-        scene.activeCamera = camera
+        activeCamera = camera
 
         player.transform.x = 720.0f
         player.transform.y = 384.0f
-        player.getMoveComponent()!!.update(0.0f, 0.0f)
 
         inventory = Inventory(player)
         player.inventory = inventory
@@ -229,9 +203,10 @@ class GameState(stateManager: StateManager): State(stateManager) {
         currentLevelText.x = currentLevelText.w/2.0f
     }
 
-    override fun update(resourceFactory: ResourceFactory, scene: Scene, input: Input) {
+    override fun update(input: Input) {
         if (player.health <= 0) {
-            stateManager.startState("menu")
+            sceneManager.unloadScene(this)
+            sceneManager.loadScene(menuScene)
         }
 
         if (player.playerMovedCell) {
@@ -239,7 +214,7 @@ class GameState(stateManager: StateManager): State(stateManager) {
             player.playerMovedCell = false
         }
 
-        level.update(input)
+        level.update(this, input)
 
         if (inventory.visible) {
             inventory.update(input)
