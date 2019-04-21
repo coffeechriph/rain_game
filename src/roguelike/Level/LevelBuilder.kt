@@ -23,10 +23,12 @@ class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
                 continue
             }
 
-            val loadedScene = JsonSceneLoader().load(file.absolutePath)
-            val cell = CellType(cellWidth, cellHeight)
-            cell.create(loadedScene)
-            cellTypes.add(cell)
+            if (file.absolutePath.endsWith(".json")) {
+                val loadedScene = JsonSceneLoader().load(file.absolutePath)
+                val cell = CellType(cellWidth, cellHeight)
+                cell.create(loadedScene)
+                cellTypes.add(cell)
+            }
         }
     }
 

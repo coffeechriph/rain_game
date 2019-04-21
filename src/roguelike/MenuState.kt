@@ -27,7 +27,7 @@ class MenuState(sceneManager: SceneManager, resourceFactory: ResourceFactory): S
     private var buttonsAnimation = 0.0f
 
     override fun init() {
-        activeCamera = camera
+        sceneManager.activeCamera = camera
 
         val rowLayout = FillRowLayout()
         rowLayout.componentHeight = 40.0f

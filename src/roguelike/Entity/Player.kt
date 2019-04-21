@@ -277,12 +277,12 @@ class Player : Entity() {
             }
 
             if (facingDirection == Direction.UP || facingDirection == Direction.DOWN) {
-                scene.activeCamera.y = 0.0f
-                scene.activeCamera.x = shake * 2
+                scene.sceneManager.activeCamera.y = 0.0f
+                scene.sceneManager.activeCamera.x = shake * 2
             }
             else {
-                scene.activeCamera.x = 0.0f
-                scene.activeCamera.y = shake * 2
+                scene.sceneManager.activeCamera.x = 0.0f
+                scene.sceneManager.activeCamera.y = shake * 2
             }
 
             val cl = Math.max(Math.min(1.0f,shake),0.0f)
@@ -295,8 +295,8 @@ class Player : Entity() {
         }
         else {
             renderComponent.color.set(0.0f, 0.0f, 0.0f, 0.0f)
-            scene.activeCamera.x = 0.0f
-            scene.activeCamera.y = 0.0f
+            scene.sceneManager.activeCamera.x = 0.0f
+            scene.sceneManager.activeCamera.y = 0.0f
         }
 
         if (!inventory.visible) {

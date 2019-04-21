@@ -179,7 +179,7 @@ class GameState(sceneManager: SceneManager, resourceFactory: ResourceFactory): S
             (5376 / TILE_WIDTH).toInt(), (1280 / TILE_WIDTH).toInt(), (768 / TILE_WIDTH).toInt()
         )
 
-        activeCamera = camera
+        sceneManager.activeCamera = camera
 
         player.transform.x = 720.0f
         player.transform.y = 384.0f
