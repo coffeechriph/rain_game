@@ -2,6 +2,7 @@ package roguelike.Level
 
 import org.joml.*
 import rain.api.Input
+import rain.api.components.Animator
 import rain.api.entity.Entity
 import rain.api.gfx.*
 import rain.api.scene.*
@@ -40,9 +41,11 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
     private lateinit var enemyTargetEntity: Entity
     private lateinit var navMesh: NavMesh
 
+    private lateinit var healthMaterial: Material
+
     private var delayLightUpdate = 0
 
-    private val activeEnemies = ArrayList<Enemy>()
+    private var activeEnemies: MutableList<Enemy> = ArrayList()
     private val activeContainers = ArrayList<Container>()
     private val activeLightSources = ArrayList<LightSource>()
     private lateinit var collisionBoxes: List<Vector4i>
@@ -154,6 +157,20 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
             .build()
         lightValues = Array(width*height){Vector4f()}
 
+        val healthTexture = resourceFactory.buildTexture2d()
+            .withName("healthTexture")
+            .fromImageFile("./data/textures/health.png")
+            .withFilter(TextureFilter.NEAREST)
+            .build()
+
+        healthMaterial = resourceFactory.buildMaterial()
+            .withName("healthMaterial")
+            .withVertexShader("./data/shaders/basic.vert.spv")
+            .withFragmentShader("./data/shaders/basic.frag.spv")
+            .withTexture(healthTexture)
+            .withBatching(false)
+            .build()
+
         enemyTargetEntity = Entity()
         scene.newEntity(enemyTargetEntity)
             .attachRenderComponent(itemMaterial, quadMesh)
@@ -169,6 +186,8 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         currentLevelCells = levelBuilder.createLevel(random, scene, tilemapMaterial)
         currentCell = currentLevelCells[0]
         collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
+        activeEnemies = levelBuilder.createEnemies(random, currentCell!!, scene, enemyMaterial, enemyAttackMaterial,
+            quadMesh, Animator(), 1, healthMaterial, player)
     }
 
     fun update(scene: Scene, input: Input) {
@@ -386,6 +405,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                     enemy.pushBackImmune = false
                     enemy.transform.x += vx * enemy.walkingSpeedFactor
                     enemy.transform.y += vy * enemy.walkingSpeedFactor
+                    enemy.transform.z = 1.0f + enemy.transform.y * 0.001f
                     if (vy > 0.0f) {
                         enemy.animator.setAnimation("walk_down")
                     }
@@ -396,6 +416,7 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
                 else if (enemy.pushBack > 5) {
                     enemy.transform.x += enemy.pushDirection.x.toFloat()
                     enemy.transform.y += enemy.pushDirection.y.toFloat()
+                    enemy.transform.z = 1.0f + enemy.transform.y * 0.001f
                     enemy.pushBack -= 1
                     enemy.animator.setAnimation("idle_down")
                 }
@@ -485,13 +506,18 @@ class Level(private val player: Player, val resourceFactory: ResourceFactory) {
         }
     }
 
-    fun switchCell(dir: Direction) {
+    fun switchCell(scene: Scene, dir: Direction) {
         when(dir) {
             Direction.LEFT -> {
                 if (currentCell!!.leftNeighbourCell != null) {
                     currentCell!!.visible = false
                     currentCell = currentCell!!.leftNeighbourCell
                     collisionBoxes = levelBuilder.createCollisionBoxes(currentCell!!)
+                    for (enemy in activeEnemies) {
+                        scene.removeEntity(enemy)
+                    }
+                    activeEnemies = levelBuilder.createEnemies(random, currentCell!!, scene, enemyMaterial,
+                        enemyAttackMaterial, quadMesh, Animator(), player.currentLevel, healthMaterial, player)
                     currentCell!!.visible = true
                 }
             }

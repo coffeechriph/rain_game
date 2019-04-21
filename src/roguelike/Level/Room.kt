@@ -101,9 +101,9 @@ class Room(val tiles: MutableList<Vector2i>, val area: Vector4i, val type: RoomT
             val enemy = random.nextInt(enemyTypes.size)
             val type = enemyTypes[enemy]
             val enemyEntity = when (type) {
-                EnemyType.STONE_GOBLIN -> StoneGoblin(random, player)
-                EnemyType.STONE_OGRE -> StoneOgre(random,player)
-                EnemyType.STONE_RAT -> StoneRat(random,player)
+                EnemyType.STONE_GOBLIN -> StoneGoblin(random)
+                EnemyType.STONE_OGRE -> StoneOgre(random)
+                EnemyType.STONE_RAT -> StoneRat(random)
             }
 
             val enemyAnimator = Animator()

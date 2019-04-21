@@ -1,11 +1,15 @@
 package roguelike.Level
 
 import org.joml.Random
+import org.joml.Vector2i
 import org.joml.Vector4i
+import rain.api.components.Animator
 import rain.api.gfx.Material
+import rain.api.gfx.Mesh
 import rain.api.scene.Scene
 import rain.api.scene.parse.JsonSceneLoader
 import rain.assertion
+import roguelike.Entity.*
 import java.io.File
 
 class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
@@ -41,25 +45,10 @@ class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
         currentLevelCells.clear()
 
         val firstCellType = cellTypes.stream().filter { type -> type.hasConnectionTop && type.hasConnectionRight && type.hasConnectionLeft && type.hasConnectionBot }.findFirst().get()
-        val cell = Cell(firstCellType, scene, tilemapMaterial)
-        currentLevelCells.add(cell)
-        createCellConnections(cell, random, scene, tilemapMaterial)
+        val firstCell = Cell(firstCellType, scene, tilemapMaterial)
+        currentLevelCells.add(firstCell)
+        createCellConnections(firstCell, random, scene, tilemapMaterial)
 
-        println("IS ANY CELL BROKEN?")
-        for (cell in currentLevelCells) {
-            if (cell.cellType.hasConnectionBot && cell.botNeighbourCell == null) {
-                println("BOT NEIGHBOUR DOES NOT EXIST!")
-            }
-            if (cell.cellType.hasConnectionTop && cell.topNeighbourCell == null) {
-                println("TOP NEIGHBOUR DOES NOT EXIST!")
-            }
-            if (cell.cellType.hasConnectionLeft && cell.leftNeighbourCell == null) {
-                println("LEFT NEIGHBOUR DOES NOT EXIST!")
-            }
-            if (cell.cellType.hasConnectionRight && cell.rightNeighbourCell == null) {
-                println("RIGHT NEIGHBOUR DOES NOT EXIST!")
-            }
-        }
         return currentLevelCells
     }
 
@@ -209,6 +198,71 @@ class LevelBuilder(var cellWidth: Int, var cellHeight: Int) {
         }
 
         return collisionBoxes
+    }
+
+    fun createEnemies(random: Random, currentCell: Cell, scene: Scene, enemyMaterial: Material,
+                      enemyAttackMaterial: Material, quadMesh: Mesh, enemyAnimator: Animator,
+                      level: Int, healthMaterial: Material, player: Player): MutableList<Enemy> {
+        val enemies = ArrayList<Enemy>()
+        for (entities in currentCell.cellType.definition.entities) {
+            for (metadata in entities.value.metadata) {
+                // TODO: Specify way to more precisely specify enemy type
+                if (metadata.name == "enemy") {
+                    for (instance in entities.value.definitionInstances) {
+                        val typeIndex = random.nextInt(EnemyType.values().size)
+                        val type = EnemyType.values()[typeIndex]
+                        val enemyEntity = when (type) {
+                            EnemyType.STONE_GOBLIN -> StoneGoblin(random)
+                            EnemyType.STONE_OGRE -> StoneOgre(random)
+                            EnemyType.STONE_RAT -> StoneRat(random)
+                        }
+                        enemyEntity.transform.x = instance.posX
+                        enemyEntity.transform.y = instance.posY
+                        enemyEntity.transform.z = instance.posZ
+                        enemyEntity.transform.sx = instance.width
+                        enemyEntity.transform.sy = instance.height
+                        scene.newEntity(enemyEntity)
+                            .attachRenderComponent(enemyMaterial, quadMesh)
+                            .attachAnimatorComponent(enemyAnimator)
+                            .build()
+
+                        scene.newEntity(enemyEntity.attackAreaVisual)
+                            .attachRenderComponent(enemyAttackMaterial, quadMesh)
+                            .build()
+
+                        val attackRenderComponent = enemyEntity.attackAreaVisual.getRenderComponents()[0]
+                        attackRenderComponent.visible = true
+                        attackRenderComponent.textureTileOffset.set(5,15)
+
+                        enemyEntity.attackAreaVisualRenderComponent = attackRenderComponent
+                        enemyEntity.attackAreaVisualTransform = enemyEntity.attackAreaVisual.transform
+
+                        val levelFactor = (level*1.5f).toInt()
+                        enemyEntity.strength = (random.nextInt(levelFactor) + levelFactor*10 * enemyEntity.strengthFactor).toInt()
+                        enemyEntity.agility = (random.nextInt(levelFactor) + levelFactor*4 * enemyEntity.agilityFactor).toInt()
+                        enemyEntity.health = (100 + random.nextInt(levelFactor) * enemyEntity.healthFactor).toInt()
+                        enemyEntity.getRenderComponents()[0].visible = true
+
+                        val et = enemyEntity.transform
+                        enemyEntity.healthBar.parentTransform = et
+
+                        scene.newEntity(enemyEntity.healthBar)
+                            .attachRenderComponent(healthMaterial, quadMesh)
+                            .build()
+
+                        enemyEntity.healthBar.getRenderComponents()[0].visible = true
+                        enemyEntity.healthBar.transform.sx = 60.0f
+                        enemyEntity.healthBar.transform.sy = 7.0f
+
+                        enemyEntity.setPosition(Vector2i(instance.posX.toInt(), instance.posY.toInt()))
+                        enemyEntity.player = player
+                        enemies.add(enemyEntity)
+                    }
+                }
+            }
+        }
+
+        return enemies
     }
 
     private fun findCellAtMapPos(x: Int, y: Int): Cell? {

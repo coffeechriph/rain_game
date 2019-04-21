@@ -112,7 +112,7 @@ class Player : Entity() {
         inventory.updateEquippedItems()
     }
 
-    fun targetEnemy(enemies: ArrayList<Enemy>, input: Input) {
+    fun targetEnemy(enemies: MutableList<Enemy>, input: Input) {
         if (targetedEnemy != null) {
             if (targetedEnemy!!.health <= 0) {
                 targetedEnemy = null
@@ -145,14 +145,14 @@ class Player : Entity() {
         }
     }
 
-    fun damageEnemies(enemies: ArrayList<Enemy>) {
+    fun damageEnemies(enemies: MutableList<Enemy>) {
         if (attack.isActive()) {
             for (enemy in enemies) {
                 val enemyTransform = enemy.transform
                 val attackTransform = attack.transform.worldTransform()
                 if (enemyTransform.x + 32.0f >= attackTransform.x - 32.0f && enemyTransform.x - 32.0f <= attackTransform.x + 32.0f &&
                     enemyTransform.y + 32.0f >= attackTransform.y - 32.0f && enemyTransform.y - 32.0f <= attackTransform.y + 32.0f) {
-                    enemy.damage(this)
+                    enemy.damage()
                     break
                 }
             }

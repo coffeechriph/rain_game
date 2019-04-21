@@ -27,7 +27,6 @@ class GameState(sceneManager: SceneManager, resourceFactory: ResourceFactory): S
     private lateinit var handsArmorMaterial: Material
     private lateinit var bootsArmorTexture: Texture2d
     private lateinit var bootsArmorMaterial: Material
-    private lateinit var healthMaterial: Material
     private var playerAnimator = Animator()
     private lateinit var player: Player
     private lateinit var inventory: Inventory
@@ -160,20 +159,6 @@ class GameState(sceneManager: SceneManager, resourceFactory: ResourceFactory): S
         player.attack.getAnimatorComponent()[0].addAnimation("attack", 0, 4, 0, 40.0f)
         player.attack.getRenderComponents()[0].visible = false
 
-        val healthTexture = resourceFactory.buildTexture2d()
-                .withName("healthTexture")
-                .fromImageFile("./data/textures/health.png")
-                .withFilter(TextureFilter.NEAREST)
-                .build()
-
-        healthMaterial = resourceFactory.buildMaterial()
-                .withName("healthMaterial")
-                .withVertexShader("./data/shaders/basic.vert.spv")
-                .withFragmentShader("./data/shaders/basic.frag.spv")
-                .withTexture(healthTexture)
-                .withBatching(false)
-                .build()
-
         // TODO: Constant window dimensions
         level.create(resourceFactory, this, (8960 / TILE_WIDTH).toInt(),
             (5376 / TILE_WIDTH).toInt(), (1280 / TILE_WIDTH).toInt(), (768 / TILE_WIDTH).toInt()
@@ -210,7 +195,7 @@ class GameState(sceneManager: SceneManager, resourceFactory: ResourceFactory): S
         }
 
         if (player.playerMovedCell) {
-            level.switchCell(player.movingDirection)
+            level.switchCell(this, player.movingDirection)
             player.playerMovedCell = false
         }
 

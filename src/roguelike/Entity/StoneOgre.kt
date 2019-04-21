@@ -4,7 +4,7 @@ import org.joml.Random
 import rain.api.Input
 import rain.api.scene.Scene
 
-class StoneOgre(random: Random, player: Player): Enemy(random, player) {
+class StoneOgre(random: Random): Enemy(random) {
     init {
         strengthFactor = 2.0f
         healthFactor = 1.5f

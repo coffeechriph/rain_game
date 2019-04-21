@@ -2,10 +2,9 @@ package roguelike.Entity
 
 import org.joml.Random
 import rain.api.Input
-import rain.api.entity.Entity
 import rain.api.scene.Scene
 
-class StoneRat(random: Random, player: Player): Enemy(random, player) {
+class StoneRat(random: Random): Enemy(random) {
     init {
         strengthFactor = 0.50f
         healthFactor = 0.55f
